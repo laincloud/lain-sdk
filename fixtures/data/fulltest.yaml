@@ -1,0 +1,25 @@
+appname: fulltest
+
+build:
+  base: centos:7.1.1503
+  prepare:
+    version: 0
+    script:
+      - mkdir -p /lain/app/bundle
+      - echo 0 > /lain/app/bundle/prepare_version
+    keep:
+      - bundle
+  script:
+    - echo 0 > /lain/app/production
+
+test:
+  script:
+    - echo OK
+
+web:
+  cmd: tail -f /lain/app/bundle/prepare_version /lain/app/production
+  port: 8000
+  memory: 256m
+
+notify:
+  slack: "#lain"

@@ -1,0 +1,1 @@
+{"notify":{"slack":"#dba"},"proc.mysqld":{"cmd":"./run_mysqld.sh","port":3306,"persistent_dirs":["/var/lib/mysql/"],"num_instance":3},"appname":"mysql","secret_files":["secrets/root_password","secrets/repl_password"],"build":{"base":"mysql:5.6"}}

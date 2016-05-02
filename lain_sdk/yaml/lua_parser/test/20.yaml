@@ -1,0 +1,20 @@
+appname: mysql
+
+build:
+  base: mysql:5.6  # use mirrored official image
+
+secret_files:
+  # 这些文件的内容会在运行时被应用管理服务里的配置替换
+  - secrets/root_password
+  - secrets/repl_password
+
+proc.mysqld:
+  cmd: ./run_mysqld.sh  # 生成配置文件、启动mysqld、并配置
+  port: 3306
+  num_instance: 3  # 保证有3个(任何时刻不超过3个) container 在运行，
+                   # 每个 instance 会有环境变量 LAIN_INSTANCE_NO，值为 1、2 或 3
+  persistent_dirs:  # 这些目录中的内容在 instance 重启时会保留
+    - /var/lib/mysql/
+
+notify:
+    slack: "#dba"

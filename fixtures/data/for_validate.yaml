@@ -1,0 +1,82 @@
+appname: for-validate
+
+build:
+  base: centos:7.1.1503
+  prepare:
+    version: 0
+    script:
+      - mkdir -p /lain/app/bundle
+      - echo 0 > /lain/app/bundle/prepare_version
+    keep:
+      - bundle
+  script:
+    - echo 0 > /lain/app/production
+
+release:
+  script:
+    - echo 'release script'
+  dest_base: centos:7.1.1503
+  copy:
+    - src: hello
+      dest: /usr/bin/hello
+    - src: goodbye
+      dest: /usr/bin/goodbye
+    - /lain/app/ok
+    - 1
+
+test:
+  script:
+    - echo OK
+
+web:
+  cmd: tail -f /lain/app/bundle/prepare_version /lain/app/production
+  port: 8000
+  memory: 256m
+  stateful: True
+
+proc.x1-y:
+  cmd: /bin/true
+  volumes:
+    - /logs
+    - /data:
+        backup_full:
+          schedule: "* * * * 0"
+          expire: "30d"
+          pre_run: "backup.sh"
+          post_run: "end-backup.py"
+        backup_increment:
+          schedule: "0 23 * * *"
+          expire: "10d"
+
+portal.portal-x1:
+  service_name: x1-y
+  allow_clients: "**"
+  cmd: ./proxy
+  port: 10000
+
+service.echo:
+  cmd: ./echo -p 1234
+  port: 1234
+  num_instances: 3
+  portal:
+    allow_clients: "**"
+    cmd: ./proxy
+    port: 10000
+
+use_services:
+  echo-server:
+    - echo
+  hello-server:
+    - hello
+    - goodbye
+
+use_resources:
+  redis:
+    num_instances: 2
+    memory: 128M
+    cpu: 1
+    services:
+      - redis
+
+notify:
+  slack: "#lain"

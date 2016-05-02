@@ -1,0 +1,11 @@
+FROM {{ base }}
+
+{% for copy in copy_list %}
+COPY {{ copy }} {{ workdir }} 
+{% endfor %}
+
+WORKDIR {{ workdir }}
+
+{% if scripts|length > 0 %}
+RUN {{ ' && '.join(scripts) }}
+{% endif %}

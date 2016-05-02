@@ -1,0 +1,25 @@
+appname: console
+
+build:
+  base: sunyi00/centos-python:1.0.0
+  prepare:
+    - touch /sbin/modprobe && chmod +x /sbin/modprobe
+    - pip install -r pip-req.txt
+    - rm -rf /lain/app/*
+  script:
+    - pip install -r pip-req.txt
+
+test:
+  script:
+    - make pylint test
+
+web:
+  cmd: ./entry.sh
+  port: 8000
+  memory: 256m
+  persistent_dirs:
+    - /externalbin
+    - /lain/app/logs
+  
+notify:
+  slack: "#lain"

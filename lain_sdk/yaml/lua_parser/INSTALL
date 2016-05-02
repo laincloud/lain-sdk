@@ -1,0 +1,34 @@
+#下载需要的软件包
+$ sudo yum install -y lua-devel unzip 
+
+#下载lua包管理工具luarocks源代码
+$ wget http://luarocks.org/releases/luarocks-2.2.1.tar.gz
+
+#编译安装luarocks
+$ cd luarocks-2.2.1
+$ ./configure
+$ sudo make bootstrap
+$ sudo ln -s /usr/local/bin/luarocks /usr/bin/
+
+#使用luarockx下载编译安装 用来解析yaml和json的Lua包 busted测试用的
+#$ sudo luarocks install lyaml
+#$ sudo luarocks install json4Lua 
+$ sudo luarocks install busted
+
+#更新系统的lua命令，否则无法使用
+$ wget http://www.lua.org/ftp/lua-5.1.4.tar.gz
+$ tar -zxvf lua-5.1.4.tar.gz
+$ cd lua-5.4.1
+$ make linux
+$ sudo make install
+
+#测试解析器
+$ lua test.lua
+
+
+# go binding
+# go get github.com/stevedonovan/luar
+
+
+# python binding
+$ sudo pip install lupa

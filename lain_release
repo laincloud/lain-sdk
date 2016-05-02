@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+
+import os, sys
+import optparse
+
+from lain_sdk.lain_yaml import LainYaml
+
+def main():
+	parser = optparse.OptionParser()
+	parser.add_option('-H', '--docker-host',
+			  help="used to set DOCKER_HOST env for this process "
+			       "(e.g. tcp://127.0.0.1:8082, unix:///var/run/docker.sock")
+        parser.add_option('--yaml',
+                          default=os.path.join(os.getcwd(), 'lain.yaml'),
+                          help="path for lain.yaml, default is `pwd`")
+        options, args = parser.parse_args()
+
+        if options.docker_host is not None:
+            os.putenv('DOCKER_HOST', options.docker_host)
+
+	LainYaml(options.yaml).build_release()
+
+
+if __name__ == '__main__':
+	sys.exit(main())

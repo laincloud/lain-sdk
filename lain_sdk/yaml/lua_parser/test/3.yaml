@@ -1,0 +1,23 @@
+                    appname: hello
+                    build:
+                        base: golang
+                        prepare:
+                            - echo prepare1
+                            - echo prepare2
+                        script:
+                            - echo buildscript1
+                            - echo buildscript2
+                    release:
+                        dest_base: ubuntu
+                        copy:
+                            - src: hello
+                              dest: /usr/bin/hello
+                            - src: entry.sh
+                              dest: /entry.sh
+                    test:
+                        script:
+                            - go test
+                    web:
+                        cmd:
+                    notify:
+                        slack: "#hello"

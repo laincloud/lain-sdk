@@ -1,0 +1,60 @@
+{
+    "web": {
+        "cmd": "hello", 
+        "memory": "64m", 
+        "env": [
+            "ENV_A=enva", 
+            "ENV_B=envb"
+        ], 
+        "volumes": [
+            "/data", 
+            "/var/lib/mysql"
+        ], 
+        "port": 80
+    }, 
+    "web.bar": {
+        "cmd": "bar", 
+        "port": 8080, 
+        "mountpoint": [
+            "a.com", 
+            "b.cn/xyz"
+        ]
+    }, 
+    "worker.foo": {
+        "cmd": "worker", 
+        "memory": "128m"
+    }, 
+    "notify": {
+        "slack": "#hello"
+    }, 
+    "test": {
+        "script": [
+            "go test"
+        ]
+    }, 
+    "appname": "hello", 
+    "release": {
+        "dest_base": "ubuntu", 
+        "copy": [
+            {
+                "dest": "/usr/bin/hello", 
+                "src": "hello"
+            }, 
+            {
+                "dest": "/entry.sh", 
+                "src": "entry.sh"
+            }
+        ]
+    }, 
+    "build": {
+        "prepare": [
+            "echo prepare1", 
+            "echo prepare2"
+        ], 
+        "base": "golang", 
+        "script": [
+            "echo buildscript1", 
+            "echo buildscript2"
+        ]
+    }
+}

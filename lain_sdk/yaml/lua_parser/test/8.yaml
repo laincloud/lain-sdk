@@ -1,0 +1,20 @@
+                    appname: hello
+                    build:
+                        base: golang
+                        script: [go build -o hello]
+                    release:
+                        dest_base: ubuntu
+                        copy:
+                            - {dest: /usr/bin/hello, src: hello}
+                    test:
+                        script: [go test]
+                    web.web1:
+                        cmd: hello
+                        port: 80
+                        cpu: 1
+                        mountpoint:
+                            - a.foo
+                    worker.strange:
+                        cmd: worker
+                        memory: 180m
+                    notify: {slack: '#hello'}

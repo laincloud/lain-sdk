@@ -1,0 +1,40 @@
+                    appname: hello
+                    build:
+                        base: golang
+                        prepare:
+                            - echo prepare1
+                            - echo prepare2
+                        script:
+                            - echo buildscript1
+                            - echo buildscript2
+                    release:
+                        dest_base: ubuntu
+                        copy:
+                            - src: hello
+                              dest: /usr/bin/hello
+                            - src: entry.sh
+                              dest: /entry.sh
+                    test:
+                        script:
+                            - go test
+                    web:
+                        cmd: hello
+                        port: 80
+                        memory: 64m
+                        env:
+                            - ENV_A=enva
+                            - ENV_B=envb
+                        volumes:
+                            - /data
+                            - /var/lib/mysql
+                    web.bar:
+                        cmd: bar
+                        port: 8080
+                        mountpoint:
+                            - a.com
+                            - b.cn/xyz
+                    worker.foo:
+                        cmd: worker
+                        memory: 128m
+                    notify:
+                        slack: "#hello"

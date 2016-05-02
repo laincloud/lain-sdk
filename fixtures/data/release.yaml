@@ -1,0 +1,40 @@
+appname: copy
+
+build:
+  base: sunyi00/centos-python:1.0.0
+  prepare:
+    version: 0
+    script:
+      - touch /sbin/modprobe && chmod +x /sbin/modprobe
+      - pip install -r pip-req.txt
+      - rm -rf /lain/app/*
+    keep:
+      - node_modules
+      - bundle
+  script:
+    - pip install -r pip-req.txt
+
+release:
+  script:
+    - echo 'release'
+  dest_base: ubuntu
+  copy:
+    - src: hello
+      dest: /usr/bin/hello
+    - hi
+
+test:
+  script:
+    - make pylint test
+
+web:
+  cmd: ./entry.sh
+  port: 8000
+  memory: 256m
+  healthcheck: '/kg/health/check'
+  persistent_dirs:
+    - /externalbin
+    - /lain/app/logs
+  
+notify:
+  slack: "#lain"

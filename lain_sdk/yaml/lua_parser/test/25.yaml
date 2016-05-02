@@ -1,0 +1,35 @@
+                    appname: hello
+                    build:
+                        base: golang
+                        prepare:
+                            - echo prepare1
+                            - echo prepare2
+                        script:
+                            - echo buildscript1
+                            - echo buildscript2
+                    release:
+                        dest_base: ubuntu
+                        copy:
+                            - src: hello
+                              dest: /usr/bin/hello
+                            - src: entry.sh
+                              dest: /entry.sh
+                    test:
+                        script:
+                            - go test
+
+                    proc.echo:
+                        cmd: ./echo -p 1234
+                        port: 1234
+                        num_instances: 3
+
+                    portal.portal-echo:
+                        allow_clients: 
+                            - "a"
+                            - "b"
+                            - "c"
+                        cmd: ./proxy
+                        port: 4321
+
+                    notify:
+                        slack: "#hello"

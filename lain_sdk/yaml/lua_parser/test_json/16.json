@@ -1,0 +1,1 @@
+{"release":{"dest_base":"ubuntu","copy":[{"dest":"/usr/bin/hello","src":"hello"}]},"worker.strange":{"cmd":"worker","memory":"180m"},"notify":{"slack":"#hello"},"test":{"script":["go test"]},"appname":"hello","web.web1":{"cmd":"hello","port":80,"mountpoint":["a.foo"],"cpu":"1a"},"build":{"base":"golang","script":["go build -o hello"]}}
