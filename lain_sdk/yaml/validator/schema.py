@@ -11,6 +11,7 @@ base_proc_pattern = "^(proc\.)" + core_pattern + "$"
 typed_proc_pattern = "^(web|worker|oneshot)" + "(\." + core_pattern + ")?$"
 service_proc_pattern = "^(service\.)" + core_pattern + "$"
 portal_proc_pattern = "^(portal\.)" + core_pattern + "$"
+apptype_pattern = "^(resource|app)$"
 
 path_pattern = "^.*$"
 
@@ -18,6 +19,12 @@ appname = {
     "description": "cluster unique name for app",
     "type": "string",
     "pattern": appname_pattern
+}
+
+apptype = {
+    "description": "apptype for app, only resource and app allowed",
+    "type": "string",
+    "pattern": apptype_pattern
 }
 
 backup_policy = {
@@ -254,6 +261,7 @@ schema = {
     "type": "object",
     "properties": {
         "appname": appname,
+        "apptype": apptype,
         "build": build,
         "test": test,
         "release": release,
