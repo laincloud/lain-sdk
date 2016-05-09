@@ -57,6 +57,7 @@ persistent_dirs_item = {
 }
 
 typed_proc_properties = {
+    "image": {"type": "string"},
     "cmd": {"type": "string"},
     "workdir": {"type": "string"},
     "working_dir": {"type": "string"},
