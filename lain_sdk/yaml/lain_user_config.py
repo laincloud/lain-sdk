@@ -29,7 +29,7 @@ class LainUserConfig:
         try:
             with open(config_file) as f:
                 lain_config = yaml.safe_load(f.read())
-            return lain_config
+            return lain_config if lain_config else {}
         except Exception:
             return {}
 
