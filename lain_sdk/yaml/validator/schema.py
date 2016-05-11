@@ -293,5 +293,5 @@ schema = {
         },
     },
     "additionalProperties": False,
-    "required": [ "appname", "build", "notify" ]
+    "required": [ "appname", "build"]
 }
