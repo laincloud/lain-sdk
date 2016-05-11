@@ -111,17 +111,21 @@ def meta_version(repo_dir, sha1=''):
     return commit_hash
 
 
+REGISTRY_CONNECT_TIMEOUT = 3
+REGISTRY_READ_TIMEOUT = 5
+
+
 def parse_registry_auth(registry):
     need_auth, auth_url = False, ''
     registry_url = "http://%s/v2" % registry
     try:
-        r = requests.get(registry_url)
+        r = requests.get(registry_url, timeout=(REGISTRY_CONNECT_TIMEOUT, REGISTRY_READ_TIMEOUT))
         need_auth = r.status_code == 401
         if need_auth:
             auth_url = _get_registry_auth_url(r)
         return need_auth, auth_url
     except Exception:
-        error("can not access registry : %s" % registry)
+        warn("can not access registry : %s" % registry)
         return False, ''
 
 

@@ -10,7 +10,8 @@ from docker import Client
 from jinja2 import Template
 from .util import (info, error,
                    recur_create_file, rm,
-                   parse_registry_auth, get_jwt_for_registry)
+                   parse_registry_auth, get_jwt_for_registry,
+                   REGISTRY_CONNECT_TIMEOUT, REGISTRY_READ_TIMEOUT)
 
 
 DOCKER_BASE_URL = os.environ.get('DOCKER_HOST', '')
@@ -302,7 +303,8 @@ def get_tag_list_in_registry(registry, appname):
     else:
         headers = None
     try:
-        r = requests.get(tag_list_url, headers=headers)
+        r = requests.get(tag_list_url, headers=headers,
+                timeout=(REGISTRY_CONNECT_TIMEOUT, REGISTRY_READ_TIMEOUT))
         return r.json()['tags']
     except:
         return []
