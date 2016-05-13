@@ -1,20 +1,9 @@
-## Docker Image Usage
-since lain uses docker, we encounter docker in docker in this image, so we need to mount $(which docker) and /var/run/docker.sock to the image,
-docker commands used in lain also needs a place to put temporary data, it's /tmp, but since docker is run on host, the output will be put in host's
-/tmp, but the container also needs to access the temporary place, so we need to `-v /tmp:/tmp`
-/lain/app is the default work directory, if you mount {directory with lain.yaml} to other directories, you need to specify it with --yaml
+# LAIN SDK
 
-`docker run -v $(which docker):/usr/local/bin/docker -v /var/run/docker.sock:/var/run/docker.sock -v /tmp:/tmp -v {directory with lain.yaml}:/lain/app changcheng/lain-sdk -h` for more help
+[![MIT license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://opensource.org/licenses/MIT)
 
-## Test
-use [py.test](http://pytest.org/latest/) for testing
+LAIN SDK 在 LAIN 集群中用于对 lain.yaml 的解析，包含 python parser 和 lua parser。
 
-tests are under `tests` directory
+在 LAIN 中使用的为 python parser，提供给 [LAIN CLI](https://github.com/laincloud/lain-cli) 与 [console](https://github.com/laincloud/console) 使用。
 
-in the same directory as this file, run `py.test` for testing
-
-## Configuration
-
-### PRIVATE_DOCKER_REGISTRY
-
-1. set private_docker_registry in /etc/lain/lain.conf.yaml
+目前 SDK 支持的 lain.yaml 格式可以查看 [LAIN White Paper](https://laincloud.gitbooks.io/white-paper/content/usermanual/lainyaml.html)。
