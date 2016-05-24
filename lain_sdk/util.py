@@ -149,9 +149,10 @@ def get_jwt_for_registry(auth_url, registry, appname):
         cfg = cfgs[registry]
         username = cfg['username']
         password = cfg['password']
-        phase, phase_config = get_phase_config_from_registry(registry)
-        domain = phase_config.get(user_config.domain_key, '')
-        url = "%s?service=%s&scope=repository:%s:push,pull&account=%s" % (auth_url, domain, appname, username)
+        # phase, phase_config = get_phase_config_from_registry(registry)
+        # domain = phase_config.get(user_config.domain_key, '')
+        # only use `lain.local` as service
+        url = "%s?service=%s&scope=repository:%s:push,pull&account=%s" % (auth_url, "lain.local", appname, username)
         response = requests.get(url, auth=HTTPBasicAuth(username, password))
         if response.status_code < 400 and response.json()['token']:
             return response.json()['token']
