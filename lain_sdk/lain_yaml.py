@@ -147,10 +147,10 @@ class LainYaml(object):
                 'base': self.build.base,
                 'workdir': self.workdir,
                 'copy_list': ['.'],
-                'scripts': self.build.prepare.script
+                'scripts': self.build.prepare.script,
             }
             name = self.img_builders['prepare'](
-                context=self.ctx, params=params)
+                context=self.ctx, params=params, build_args=[])
             if name is None:
                 return (False, None)
             if mydocker.push(self.img_names['prepare']) != 0:
@@ -172,10 +172,10 @@ class LainYaml(object):
                 'base': self.build.base,
                 'workdir': self.workdir,
                 'copy_list': ['.'],
-                'scripts': self.build.prepare.script
+                'scripts': self.build.prepare.script,
             }
             name = self.img_builders['prepare'](
-                context=self.ctx, params=params)
+                context=self.ctx, params=params, build_args=[])
             if name is None:
                 return (False, None)
             if mydocker.push(self.img_names['prepare']) != 0:
@@ -187,11 +187,11 @@ class LainYaml(object):
                 'base': self.img_names['prepare'],
                 'workdir': self.workdir,
                 'copy_list': ['.'],
-                'scripts': self.build.prepare.script
+                'scripts': self.build.prepare.script,
             }
             name = self.prepare_updater(
                 name=self.gen_prepare_shared_image_name(),
-                context=self.ctx, params=params)
+                context=self.ctx, params=params, build_args=[])
             if name is None:
                 return (False, None)
             if mydocker.push(name) != 0:
@@ -215,9 +215,10 @@ class LainYaml(object):
             'base': self.img_names['prepare'],
             'workdir': self.workdir,
             'copy_list': ['.'],
-            'scripts': self.build.script
+            'scripts': self.build.script,
+            'build_args': [arg.split('=')[0] for arg in self.build.build_arg]
         }
-        name = self.img_builders['build'](context=self.ctx, params=params)
+        name = self.img_builders['build'](context=self.ctx, params=params, build_args=self.build.build_arg)
         if name is None:
             return (False, None)
         return (True, name)
@@ -235,11 +236,12 @@ class LainYaml(object):
                 'base': self.img_names['build'],
                 'workdir': self.workdir,
                 'copy_list': [],
-                'scripts': self.release.script
+                'scripts': self.release.script,
+                'build_args': [arg.split('=')[0] for arg in self.build.build_arg]
             }
             inter_name = self.gen_name(phase='script_inter')
             script_inter_name = mydocker.build(
-                inter_name, self.ctx, self.ignore, self.img_temps['build'], params)
+                inter_name, self.ctx, self.ignore, self.img_temps['build'], params, self.build.build_arg)
             if script_inter_name is None:
                 return (False, None)
         else:
@@ -271,7 +273,7 @@ class LainYaml(object):
         }
         inter_name = self.gen_name(phase='copy_inter')
         copy_inter_name = mydocker.build(
-            inter_name, self.ctx, self.ignore, self.img_temps['build'], params)
+            inter_name, self.ctx, self.ignore, self.img_temps['build'], params, [])
         if script_inter_name != self.img_names['build']:
             mydocker.remove_image(script_inter_name)
         if copy_inter_name is None:
@@ -293,7 +295,7 @@ class LainYaml(object):
                 'workdir': self.workdir,
                 'copy_list': ['.'],
             }
-            name = self.img_builders['release'](context=untar, params=params)
+            name = self.img_builders['release'](context=untar, params=params, build_args=[])
         except Exception:
             name = None
         finally:
@@ -320,7 +322,7 @@ class LainYaml(object):
             'copy_list': [],
             'scripts': self.test.script
         }
-        test_name = self.img_builders['test'](context=self.ctx, params=params)
+        test_name = self.img_builders['test'](context=self.ctx, params=params, build_args=[])
         if test_name is None:
             last_container_id = mydocker.get_latest_container_id()
             if last_container_id != -1:
@@ -342,7 +344,7 @@ class LainYaml(object):
         params = {
             'base': 'scratch'
         }
-        name = self.img_builders['meta'](context=self.ctx, params=params)
+        name = self.img_builders['meta'](context=self.ctx, params=params, build_args=[])
         if name is None:
             return (False, None)
         return (True, name)
