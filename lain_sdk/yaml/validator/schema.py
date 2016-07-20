@@ -65,7 +65,12 @@ cmd = {
             "type": "array",
             "items": {"type": "string"}
         }
-    ]
+    ],
+    "message": 'Your *cmd* setup is not correct.\
+    cmd supports 3 forms similar to Dockerfile\'s CMD:\
+    1. cmd: ["excutable", "param1", "param2"]   # exec form\
+    2. cmd: ["param1", "param2"]    # as default parameters to ENTRYPOINT\
+    3. cmd: excutable param1 param2     # shell form'
 }
 
 typed_proc_properties = {
