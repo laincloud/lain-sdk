@@ -60,6 +60,7 @@ cmd = {
     "description": "cmd format, support exec form and shell form similiar to CMD in Dockerfile",
     "type": "object",
     "oneOf": [
+        {"type": "null"},
         {"type": "string"},
         {
             "type": "array",
