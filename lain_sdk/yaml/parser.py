@@ -13,6 +13,7 @@ from os.path import abspath
 from ..mydocker import gen_image_name
 from .conf import PRIVATE_REGISTRY, DOMAIN, DOCKER_APP_ROOT
 from ..util import lain_based_path
+from ..util import info
 
 SOCKET_TYPES = 'tcp udp'
 SocketType = Enum('SocketType', SOCKET_TYPES)
@@ -169,6 +170,7 @@ class Proc:
             self.type = ProcType[proc_info[0]]  ## 放弃meta里面的type定义
         self.image = meta.get('image', default_image_name)
         meta_cmd = meta.get('cmd')
+        info("kai >>> meta_cmd: {}".format(meta_cmd))
         self.cmd = meta_cmd if meta_cmd else ''
         self.user = meta.get('user', '')
         self.working_dir = meta.get('workdir') or meta.get('working_dir', '')
