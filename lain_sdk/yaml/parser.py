@@ -171,7 +171,9 @@ class Proc:
         self.image = meta.get('image', default_image_name)
         meta_cmd = meta.get('cmd')
         info("kai >>> meta_cmd: {}".format(meta_cmd))
-        self.cmd = meta_cmd if meta_cmd else ''
+        # self.cmd = meta_cmd if meta_cmd else ''
+        self.cmd = self.__to_cmd_list(meta_cmd)
+        info("kai >>> self.cmd: {}".format(self.cmd))
         self.user = meta.get('user', '')
         self.working_dir = meta.get('workdir') or meta.get('working_dir', '')
         dns_search_meta = meta.get('dns_search', [])
@@ -336,6 +338,15 @@ class Proc:
         # 仅patch此proc的动态scale的meta信息
         for k in self.SIMPLE_SCALE_KEYWORDS._member_names_:
             self.__dict__[k] = proc.__dict__[k]
+
+    def __to_cmd_list(self, meta_cmd):
+        if isinstance(meta_cmd, basestring):
+            cmd_list = meta_cmd.split()
+        elif isinstance(meta_cmd, list) and all(isinstance(item, basestring) for item in meta_cmd):
+            cmd_list = meta_cmd
+        else:   # None 或者非法输入，在 lain validate 里检查
+            cmd_list = []
+        return cmd_list
 
     @property
     def annotation(self):
