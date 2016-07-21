@@ -344,7 +344,7 @@ class Proc:
             cmd_list = meta_cmd.split()
         elif isinstance(meta_cmd, list) and all(isinstance(item, basestring) for item in meta_cmd):
             cmd_list = meta_cmd
-        else:   # None 或者非法输入，在 lain validate 里检查
+        else:   # None 或者非法输入，用 lain validate 里检查
             cmd_list = []
         return cmd_list
 

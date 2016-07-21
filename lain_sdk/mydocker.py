@@ -154,6 +154,7 @@ def copy_to_host(image_name, docker_path, host_path, directory=False):
     else:
         cp = ['cp']
     inter_host_dir = tempfile.mkdtemp()
+    info("kai >>> after mkdtemp")
     inter_dock_dir = '/lain_share'
     docker_args = ['run', '--rm', '-v', '{}:{}'.format(inter_host_dir, inter_dock_dir), image_name]
     docker_args += cp + [docker_path, inter_dock_dir]
