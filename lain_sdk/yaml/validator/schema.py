@@ -296,10 +296,10 @@ schema = {
             "additionalProperties": False,
             "oneOf": [
                 {
-                    "required": "entrypoint"
+                    "required": ["entrypoint"]
                 },
                 {
-                    "required": "cmd"
+                    "required": ["cmd"]
                 }
             ]
         },
