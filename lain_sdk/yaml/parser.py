@@ -13,7 +13,6 @@ from os.path import abspath
 from ..mydocker import gen_image_name
 from .conf import PRIVATE_REGISTRY, DOMAIN, DOCKER_APP_ROOT
 from ..util import lain_based_path
-from ..util import info
 
 SOCKET_TYPES = 'tcp udp'
 SocketType = Enum('SocketType', SOCKET_TYPES)
