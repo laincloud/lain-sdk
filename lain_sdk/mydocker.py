@@ -39,9 +39,7 @@ def _docker(args, cwd=None, env={}, capture_output=False, print_stdout=True):
     """
 
     cmd = ['docker'] + args
-    info("kai >>> cmd >>> {}".format(cmd))
     env = dict(env, DOCKER_HOST='')
-    info("kai >>> env >>> {}".format(env))
 
     if capture_output:
         try:
@@ -115,8 +113,6 @@ def build(name, context, ignore, template, params):
     dockerfile_path = os.path.join(context, 'Dockerfile')
     dockerignore_path = os.path.join(context, '.dockerignore')
     dockerignore_backup = os.path.join(context, '.dockerignore.backup')
-    info("kai >>> dockerfile_path >>> {}".format(dockerfile_path))
-    info("kai >>> template >>> {}".format(template))
     try:
         gen_dockerfile(dockerfile_path, template, params)
         gen_dockerignore(dockerignore_path, ignore)
@@ -157,20 +153,16 @@ def copy_to_host(image_name, docker_path, host_path, directory=False):
         cp = ['cp', '-r']
     else:
         cp = ['cp']
-    info("kai >>> cp >>> {}".format(cp))
     inter_host_dir = tempfile.mkdtemp()
     inter_dock_dir = '/lain_share'
     docker_args = ['run', '--rm', '-v', '{}:{}'.format(inter_host_dir, inter_dock_dir), image_name]
     docker_args += cp + [docker_path, inter_dock_dir]
-    info("kai >>> before >>> _docker")
-    info("kai >>> docker_args >>> {}".format(docker_args))
     try:
         _docker(docker_args)
     except subprocess.CalledProcessError as e:
         error(e.output)
         exit(1)
 
-    info("kai >>> after >>> _docker")
     inter_host_path = os.path.join(inter_host_dir, os.path.basename(docker_path))
     try:
         shutil.copy(inter_host_path, host_path)

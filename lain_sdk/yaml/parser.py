@@ -171,14 +171,9 @@ class Proc:
             self.type = ProcType[proc_info[0]]  ## 放弃meta里面的type定义
         self.image = meta.get('image', default_image_name)
         meta_entrypoint = meta.get('entrypoint')
-        info("kai >>> meta_entrypoint: {}".format(meta_entrypoint))
         self.entrypoint = self.__to_exec_form(meta_entrypoint)
-        info("kai >>> self.entrypoint: {}".format(self.entrypoint))
         meta_cmd = meta.get('cmd')
-        info("kai >>> meta_cmd: {}".format(meta_cmd))
-        # self.cmd = meta_cmd if meta_cmd else ''
         self.cmd = self.__to_exec_form(meta_cmd)
-        info("kai >>> self.cmd: {}".format(self.cmd))
         self.user = meta.get('user', '')
         self.working_dir = meta.get('workdir') or meta.get('working_dir', '')
         dns_search_meta = meta.get('dns_search', [])

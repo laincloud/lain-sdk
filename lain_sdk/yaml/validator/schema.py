@@ -56,8 +56,8 @@ persistent_dirs_item = {
     ]
 }
 
-cmd = {
-    "description": "cmd format, support exec form and shell form similar to CMD in Dockerfile",
+exec_form_or_shell_form = {
+    "description": "exec form or shell form similar to the one in Dockerfile",
     "oneOf": [
         {"type": "null"},
         {"type": "string"},
@@ -71,7 +71,8 @@ cmd = {
 typed_proc_properties = {
     "user": {"type": "string"},
     "image": {"type": "string"},
-    "cmd": cmd,
+    "entrypoint": exec_form_or_shell_form,
+    "cmd": exec_form_or_shell_form,
     "workdir": {"type": "string"},
     "working_dir": {"type": "string"},
     "num_instances": {"type": "integer"},
