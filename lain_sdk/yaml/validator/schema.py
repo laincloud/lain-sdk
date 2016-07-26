@@ -294,7 +294,7 @@ schema = {
             "type": "object",
             "properties": typed_proc_properties,
             "additionalProperties": False,
-            "oneOf": [
+            "anyOf": [
                 {
                     "required": ["entrypoint"]
                 },
