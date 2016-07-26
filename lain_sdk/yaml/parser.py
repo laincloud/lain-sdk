@@ -128,6 +128,7 @@ class Proc:
     name = ''
     type = ProcType.worker
     image = ''
+    entrypoint = ''
     cmd = ''
     num_instances = 1
     cpu = 0
@@ -169,10 +170,14 @@ class Proc:
             self.name = proc_info[0]
             self.type = ProcType[proc_info[0]]  ## 放弃meta里面的type定义
         self.image = meta.get('image', default_image_name)
+        meta_entrypoint = meta.get('entrypoint')
+        info("kai >>> meta_entrypoint: {}".format(meta_entrypoint))
+        self.entrypoint = self.__to_exec_form(meta_entrypoint)
+        info("kai >>> self.entrypoint: {}".format(self.entrypoint))
         meta_cmd = meta.get('cmd')
         info("kai >>> meta_cmd: {}".format(meta_cmd))
         # self.cmd = meta_cmd if meta_cmd else ''
-        self.cmd = self.__to_cmd_list(meta_cmd)
+        self.cmd = self.__to_exec_form(meta_cmd)
         info("kai >>> self.cmd: {}".format(self.cmd))
         self.user = meta.get('user', '')
         self.working_dir = meta.get('workdir') or meta.get('working_dir', '')
@@ -325,6 +330,7 @@ class Proc:
 
     def patch(self, payload):
         # 这里仅限于proc自身信息的变化，不可包括meta_version
+        self.entrypoint = payload.get('entrypoint', self.entrypoint)
         self.cmd = payload.get('cmd', self.cmd)
         self.cpu = payload.get('cpu', self.cpu)
         self.memory = payload.get('memory', self.memory)
@@ -339,14 +345,16 @@ class Proc:
         for k in self.SIMPLE_SCALE_KEYWORDS._member_names_:
             self.__dict__[k] = proc.__dict__[k]
 
-    def __to_cmd_list(self, meta_cmd):
-        if isinstance(meta_cmd, basestring):
-            cmd_list = meta_cmd.split()
-        elif isinstance(meta_cmd, list) and all(isinstance(item, basestring) for item in meta_cmd):
-            cmd_list = meta_cmd
+    def __to_exec_form(self, command_and_params):
+        """ 将 shell form(空格分隔) 转变为 exec form(string list)，或者保持 exec form 的格式
+        """
+        if isinstance(command_and_params, basestring):
+            command_and_params_list = command_and_params.split()
+        elif isinstance(command_and_params, list) and all(isinstance(item, basestring) for item in command_and_params):
+            command_and_params_list = command_and_params
         else:   # None 或者非法输入，用 lain validate 里检查
-            cmd_list = []
-        return cmd_list
+            command_and_params_list = []
+        return command_and_params_list
 
     @property
     def annotation(self):
