@@ -346,7 +346,7 @@ class Proc:
             command_and_params_list = command_and_params.split()
         elif isinstance(command_and_params, list) and all(isinstance(item, basestring) for item in command_and_params):
             command_and_params_list = command_and_params
-        else:   # None 或者非法输入，用 lain validate 里检查
+        else:   # None 或者非法输入，如果是非法输入，在 lain build 时会给出警告
             command_and_params_list = []
         return command_and_params_list
 
