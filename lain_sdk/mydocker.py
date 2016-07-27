@@ -220,7 +220,7 @@ def proc_run(container_name, image, working_dir, port, cmd, envs, volumes):
         for k, v in volumes.iteritems()
     ], [])
     docker_args = ['run', '-d', '--name={}'.format(container_name)] \
-        + working_dir_opt + port_opt + env_opt + volume_opt + [image] + [cmd]
+        + working_dir_opt + port_opt + env_opt + volume_opt + [image] + cmd
     _docker(docker_args)
 
 

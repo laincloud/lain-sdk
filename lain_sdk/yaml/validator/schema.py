@@ -56,10 +56,23 @@ persistent_dirs_item = {
     ]
 }
 
+exec_form_or_shell_form = {
+    "description": "exec form or shell form similar to the one in Dockerfile",
+    "oneOf": [
+        {"type": "null"},
+        {"type": "string"},
+        {
+            "type": "array",
+            "items": {"type": "string"}
+        }
+    ]
+}
+
 typed_proc_properties = {
     "user": {"type": "string"},
     "image": {"type": "string"},
-    "cmd": {"type": "string"},
+    "entrypoint": exec_form_or_shell_form,
+    "cmd": exec_form_or_shell_form,
     "workdir": {"type": "string"},
     "working_dir": {"type": "string"},
     "num_instances": {"type": "integer"},
@@ -281,6 +294,14 @@ schema = {
             "type": "object",
             "properties": typed_proc_properties,
             "additionalProperties": False,
+            "anyOf": [
+                {
+                    "required": ["entrypoint"]
+                },
+                {
+                    "required": ["cmd"]
+                }
+            ]
         },
         portal_proc_pattern: {
             "type": "object",
