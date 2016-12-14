@@ -118,9 +118,9 @@ class LainConfTests(TestCase):
         assert hello_conf.procs['web'].port[80].port == 80
         assert hello_conf.procs['web'].stateful is False
         assert hello_conf.procs['foo'].memory == '128m'
-        assert hello_conf.procs['foo'].cmd == 'worker'
+        assert hello_conf.procs['foo'].cmd == ['worker']
         assert hello_conf.procs['foo'].type == ProcType.worker
-        assert hello_conf.procs['bar'].cmd == 'bar'
+        assert hello_conf.procs['bar'].cmd == ['bar']
         assert hello_conf.procs['bar'].type == ProcType.web
         assert hello_conf.procs['bar'].mountpoint == ['a.com', 'b.cn/xyz']
         assert hello_conf.procs['bar'].https_only is False
@@ -210,7 +210,7 @@ class LainConfTests(TestCase):
         hello_conf.load(meta_yaml, meta_version, None)
         assert hello_conf.appname == 'hello'
         assert hello_conf.procs['web'].port[80].port == 80
-        assert hello_conf.procs['web'].cmd == ''
+        assert hello_conf.procs['web'].cmd == []
 
     def test_lain_conf_port_with_type(self):
         meta_yaml = '''
@@ -651,14 +651,14 @@ class LainConfTests(TestCase):
         assert mailer.cpu == 0
         assert mailer.memory == "128m"
         assert mailer.num_instances == 1
-        assert mailer.cmd == "hello"
+        assert mailer.cmd == ["hello"]
         assert mailer.port[80].port == 80
         mailer.patch(payload)
         mailer = hello_conf.procs['mailer']
         assert mailer.cpu == 2
         assert mailer.memory == "64m"
         assert mailer.num_instances == 2
-        assert mailer.cmd == "hello world"
+        assert mailer.cmd == ["hello", "world"]
         assert mailer.port[8080].port == 8080
 
     def test_lain_conf_proc_patch_only_simple_scale_meta(self):
@@ -683,7 +683,7 @@ class LainConfTests(TestCase):
         assert proc.type.name == 'web'
         assert proc.cpu == 0
         assert proc.memory == "32m"
-        assert proc.cmd == "hello"
+        assert proc.cmd == ["hello"]
         assert proc.num_instances == 1
         assert proc.port[80].port == 80
         proc.patch_only_simple_scale_meta(proc1)
@@ -691,7 +691,7 @@ class LainConfTests(TestCase):
         assert proc.type.name == 'web'
         assert proc.cpu == 2
         assert proc.memory == "64m"
-        assert proc.cmd == "hello"
+        assert proc.cmd == ["hello"]
         assert proc.num_instances == 2
         assert proc.port[80].port == 80
 
@@ -1522,6 +1522,80 @@ class LainConfTests(TestCase):
         for proc in echoclient_conf.procs.values():
             assert proc.system_volumes == DEFAULT_SYSTEM_VOLUMES
 
+    def test_lain_conf_cloud_volumes_multi_type(self):
+        meta_yaml = '''
+                    appname: hello
+                    build:
+                        base: golang
+                        prepare:
+                            - echo prepare1
+                        script:
+                            - echo buildscript1
+                    release:
+                        dest_base: ubuntu
+                        copy:
+                            - src: hello
+                              dest: /usr/bin/hello
+                            - src: entry.sh
+                              dest: /entry.sh
+                    test:
+                        script:
+                            - go test
+                    web:
+                        cmd: hello
+                        port: 80
+                        memory: 64m
+                        cloud_volumes:
+                            dirs:
+                                - /data
+                                - /var/lib/mysql
+                    '''
+        repo_name = 'hello'
+        meta_version = '1428553798.443334-7142797e64bb7b4d057455ef13de6be156ae81cc'
+        echoclient_conf = LainConf()
+        echoclient_conf.load(meta_yaml, repo_name, meta_version)
+        assert echoclient_conf.appname == 'hello'
+        assert echoclient_conf.procs['web'].cloud_volumes.get('multi') == ['/data', '/var/lib/mysql']
+        print echoclient_conf.procs['web'].cloud_volumes
+
+    def test_lain_conf_cloud_volumes_single_type(self):
+        meta_yaml = '''
+                    appname: hello
+                    build:
+                        base: golang
+                        prepare:
+                            - echo prepare1
+                        script:
+                            - echo buildscript1
+                    release:
+                        dest_base: ubuntu
+                        copy:
+                            - src: hello
+                              dest: /usr/bin/hello
+                            - src: entry.sh
+                              dest: /entry.sh
+                    test:
+                        script:
+                            - go test
+                    web:
+                        cmd: hello
+                        port: 80
+                        memory: 64m
+                        cloud_volumes:
+                            type: single
+                            dirs:
+                                - /data
+                                - /var/lib/mysql
+                    '''
+        repo_name = 'hello'
+        meta_version = '1428553798.443334-7142797e64bb7b4d057455ef13de6be156ae81cc'
+        echoclient_conf = LainConf()
+        echoclient_conf.load(meta_yaml, repo_name, meta_version)
+        assert echoclient_conf.appname == 'hello'
+        assert echoclient_conf.procs['web'].cloud_volumes.get('multi') == None
+        assert echoclient_conf.procs['web'].cloud_volumes.get('single') == ['/data', '/var/lib/mysql']
+        print echoclient_conf.procs['web'].cloud_volumes
+
     def test_lain_conf_volume_backup(self):
         meta_yaml = '''
                     appname: echo-client
@@ -1811,8 +1885,8 @@ def test_resource_instance_meta_render_full():
     mysqld_proc = resource_instance_config.procs['mysqld']
     assert mysqld_proc.memory == '128M'
     assert mysqld_proc.num_instances == 2
-    assert mysqld_proc.image =='mysql:5.6'
-    assert mysqld_proc.cmd =='mysqld 128M'
+    assert mysqld_proc.image == 'mysql:5.6'
+    assert mysqld_proc.cmd == ['mysqld', '128M']
     mysqlproxy_proc = resource_instance_config.procs['mysqlproxy']
     assert mysqlproxy_proc.image == 'myregistry.lain.org/proxy:release-1234567-abc'
 

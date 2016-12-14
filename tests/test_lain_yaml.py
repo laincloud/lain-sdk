@@ -24,7 +24,7 @@ class TestLainYaml:
         assert y.release.copy[0]['src'] == 'hello'
         assert y.release.copy[0]['dest'] ==  '/usr/bin/hello'
         assert y.test.script == ['( go test )']
-        assert y.procs['web'].cmd == 'hello'
+        assert y.procs['web'].cmd == ['hello']
         assert y.procs['web'].setup_time == 40
         assert y.procs['web'].kill_timeout == 30
 
