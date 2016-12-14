@@ -18,6 +18,7 @@ SOCKET_TYPES = 'tcp udp'
 SocketType = Enum('SocketType', SOCKET_TYPES)
 PROC_TYPES = 'worker web oneshot portal'
 ProcType = Enum('ProcType', PROC_TYPES)
+CloudVolumeType = ['multi', 'single']
 DEFAULT_SYSTEM_VOLUMES = ["/data/lain/entrypoint:/lain/entrypoint:ro", "/etc/localtime:/etc/localtime:ro"]
 VALID_PREPARE_VERSION_PATERN = re.compile(r'^[a-zA-Z0-9]+$')
 INVALID_APPNAMES = ('service', 'resource', 'portal')
@@ -142,6 +143,7 @@ class Proc:
     env = []
     volumes = []
     system_volumes = []
+    cloud_volumes = {}
     secret_files = [] #for proc
     service_name = ''
     allow_clients = ''
@@ -294,6 +296,8 @@ class Proc:
         # add default system volume
         self.system_volumes = DEFAULT_SYSTEM_VOLUMES
 
+        self.cloud_volumes = self._load_cloud_volumes(meta)
+
         #for secret_files
         self.secret_files = meta.get('secret_files') or []
         # add /lain/app for relative paths
@@ -308,6 +312,18 @@ class Proc:
             self.service_name = service_name_meta
             self.allow_clients = allow_clients_meta
 
+    def _load_cloud_volumes(self, meta):
+        cloud_volumes = {}
+        vol_info = meta.get('cloud_volumes', None)
+        if vol_info:
+            vol_type = vol_info.get('type', 'multi')
+            if vol_type not in CloudVolumeType:
+                raise Exception("cloud volume type %s not supported, only multi and single are valid" % vol_type)
+            vol_dirs = []
+            for vol in vol_info.get('dirs') or []:
+                vol_dirs.append(lain_based_path(vol))
+            cloud_volumes[vol_type] = vol_dirs
+        return cloud_volumes
 
     def _load_ports(self, meta):
         if not isinstance(meta, list):
@@ -325,7 +341,8 @@ class Proc:
     def patch(self, payload):
         # 这里仅限于proc自身信息的变化，不可包括meta_version
         self.entrypoint = payload.get('entrypoint', self.entrypoint)
-        self.cmd = payload.get('cmd', self.cmd)
+        meta_cmd = payload.get('cmd', self.cmd)
+        self.cmd = self.__to_exec_form(meta_cmd)
         self.cpu = payload.get('cpu', self.cpu)
         self.memory = payload.get('memory', self.memory)
         self.num_instances = payload.get('num_instances', self.num_instances)
@@ -433,6 +450,7 @@ class Release:
                 self.copy.append(c)
             else:
                 pass
+
 
 class Test:
     script = []
