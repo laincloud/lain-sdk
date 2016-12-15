@@ -56,6 +56,22 @@ persistent_dirs_item = {
     ]
 }
 
+cloud_volumes_policy = {
+    "description": "mount volumes from nfs like file system",
+    "type": "object",
+    "properties": {
+        "type": {
+            "description": "whether store in one volume for all the instances",
+            "items": {"type": "string"}
+        },
+        "dirs": {
+            "items": {"type": "string"},
+        },
+    },
+    "additionalProperties": False,
+    "required": [ "dirs" ]
+}
+
 exec_form_or_shell_form = {
     "description": "exec form or shell form similar to the one in Dockerfile",
     "oneOf": [
@@ -83,6 +99,7 @@ typed_proc_properties = {
     "env": {"items": {"type": "string"}},
     "persistent_dirs": {"items": persistent_dirs_item},
     "volumes": {"items": persistent_dirs_item},
+    "cloud_volumes": cloud_volumes_policy,
     "secret_files": {"items": {"type": "string"}},
     "logs": {"items": {"type": "string"}},
     "mountpoint": {"items": {"type": "string"}},
