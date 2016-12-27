@@ -327,7 +327,8 @@ class LainYaml(object):
         """
         self._prepare_act()
         params = {
-            'base': 'scratch'
+            'base': 'scratch',
+            'lain_yaml_path': p.basename(self.yaml_path),
         }
         name = self.img_builders['meta'](context=self.ctx, params=params)
         if name is None:
