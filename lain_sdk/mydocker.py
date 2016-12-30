@@ -316,6 +316,8 @@ def get_tag_list_in_docker_daemon(registry, appname):
     imgs = c.images()
     for img in imgs:
         repo_tags = img['RepoTags']
+        if not repo_tags:
+            continue
         for repo_tag in repo_tags:
             try:
                 s_list = repo_tag.split(":")
