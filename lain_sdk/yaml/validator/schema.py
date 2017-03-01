@@ -12,6 +12,7 @@ typed_proc_pattern = "^(web|worker|oneshot)" + "(\." + core_pattern + ")?$"
 service_proc_pattern = "^(service\.)" + core_pattern + "$"
 portal_proc_pattern = "^(portal\.)" + core_pattern + "$"
 apptype_pattern = "^(resource|app)$"
+memory_pattern = "^[1-9]+[0-9]*[mMgG]$"
 
 path_pattern = "^.*$"
 
@@ -84,6 +85,12 @@ exec_form_or_shell_form = {
     ]
 }
 
+memory = {
+    "description": "memory limit",
+    "type": "string",
+    "pattern": memory_pattern
+}
+
 typed_proc_properties = {
     "user": {"type": "string"},
     "image": {"type": "string"},
@@ -93,7 +100,7 @@ typed_proc_properties = {
     "working_dir": {"type": "string"},
     "num_instances": {"type": "integer"},
     "cpu": {"type": "integer"},
-    "memory": {"type": "string"},
+    "memory": memory,
     "port": {"type": "integer"},
     "healthcheck": {"type": "string"},
     "env": {"items": {"type": "string"}},
