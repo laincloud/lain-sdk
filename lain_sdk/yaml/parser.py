@@ -19,7 +19,8 @@ SocketType = Enum('SocketType', SOCKET_TYPES)
 PROC_TYPES = 'worker web oneshot portal'
 ProcType = Enum('ProcType', PROC_TYPES)
 CloudVolumeType = ['multi', 'single']
-DEFAULT_SYSTEM_VOLUMES = ["/data/lain/entrypoint:/lain/entrypoint:ro", "/etc/localtime:/etc/localtime:ro"]
+DEFAULT_SYSTEM_VOLUMES = [
+    "/data/lain/entrypoint:/lain/entrypoint:ro", "/etc/localtime:/etc/localtime:ro"]
 VALID_PREPARE_VERSION_PATERN = re.compile(r'^[a-zA-Z0-9]+$')
 INVALID_APPNAMES = ('service', 'resource', 'portal')
 INVALID_VOLUMES = ('/', '/lain', DOCKER_APP_ROOT)
@@ -36,16 +37,19 @@ def restrict_value(v, minv, maxv):
         return maxv
     return v
 
+
 def is_section(keyword, section_class):
     _keyword = keyword.split('.')[0]
     if _keyword in section_class.SECTION_KEYWORDS._member_names_:
         return True
     return False
 
+
 def just_simple_scale(keyword, scale_class):
     if keyword in scale_class.SIMPLE_SCALE_KEYWORDS._member_names_:
         return True
     return False
+
 
 def split_path(path):
     pathlist = []
@@ -91,6 +95,100 @@ def validate_volume(path):
     return not abspath(_path) in INVALID_VOLUMES
 
 
+class Labels:
+    SECTION_KEYWORDS = Enum('SECTION_KEYWORDS', 'labels')
+    patten = re.compile(r'(.*):(.*)')
+
+    def load(self, meta):
+        self.labels = {}
+        if isinstance(meta, str):
+            key, value = self.parse(meta)
+            self.labels[key] = value
+        elif isinstance(meta, list):
+            for m in meta:
+                key, value = self.parse(m)
+                self.labels[key] = value
+        print self.labels
+
+    def parse(self, meta):
+        m = self.patten.match(meta)
+        if m:
+            return m.group(1), m.group(2)
+        raise Exception('not supported labels desc %s' % (meta, ))
+
+
+class Filters:
+    SECTION_KEYWORDS = Enum('SECTION_KEYWORDS', 'filters')
+    patten = re.compile(r'(affinity|constraint):(.*)(==|!=)(.*)')
+
+    def load(self, meta):
+        self.filters = []
+        if isinstance(meta, str):
+            self.parse(meta)
+            self.filters.append(meta)
+        elif isinstance(meta, list):
+            for m in meta:
+                self.parse(m)
+                self.filters.append(m)
+        print self.filters
+
+    def parse(self, meta):
+        m = self.patten.match(meta)
+        if m:
+            return meta
+        raise Exception('not supported labels desc %s' % (meta, ))
+
+
+class Ports:
+    SECTION_KEYWORDS = Enum('SECTION_KEYWORDS', 'ports')
+    MAX_PORT = 10000
+    MIN_PORT = 9500
+    PORT_MAP_FORMAT = '{src_port}:{dst_port}/{proto}'
+
+    def load(self, meta):
+        self.ports = []
+        self.src_port = []
+        if isinstance(meta, str):
+            self.ports = [self.parse(meta)]
+        elif isinstance(meta, list):
+            for m in meta:
+                self.ports.append(self.parse(m))
+
+    def parse(self, meta):
+        values = meta.split('/')
+        proto = SocketType.tcp.name
+        if len(values) == 2 and (values[1] == SocketType.udp.name or values[1] == SocketType.tcp.name):
+            proto = values[1]
+        ports_mapping = values[0]
+        ports = ports_mapping.split(':')
+        if len(ports) >= 2:
+            src_port = ports[0]
+            dst_port = ports[1]
+        elif len(ports) == 1:
+            src_port = dst_port = ports[0]
+        else:
+            raise Exception('not supported ports desc %s' % (meta, ))
+        src_port = self.valid_port(src_port)
+        if src_port < self.MIN_PORT or src_port > self.MAX_PORT:
+            raise Exception('src port should between %s and %s' %
+                            (self.MIN_PORT, self.MAX_PORT))
+        if src_port in self.src_port:
+            raise Exception('cant bind src port to many dst ports %s' %
+                            (meta, ))
+        self.src_port.append(src_port)
+        dst_port = self.valid_port(dst_port)
+        if dst_port < 1 or dst_port > 65535:
+            raise Exception('dst port should between %s and %s' % (1, 65535))
+        return self.PORT_MAP_FORMAT.format(src_port=src_port, dst_port=dst_port, proto=proto)
+
+    def valid_port(self, portstr):
+        try:
+            port = int(portstr)
+        except ValueError:
+            raise Exception('not supported ports desc %s' % (meta, ))
+        return port
+
+
 class Port:
     SECTION_KEYWORDS = Enum('SECTION_KEYWORDS', 'port')
     port = 80
@@ -124,7 +222,8 @@ class Port:
 
 class Proc:
     SECTION_KEYWORDS = Enum('SECTION_KEYWORDS', PROC_TYPES + " proc service")
-    SIMPLE_SCALE_KEYWORDS = Enum("SIMPLE_SCALE_KEYWORDS", "num_instances cpu memory")
+    SIMPLE_SCALE_KEYWORDS = Enum(
+        "SIMPLE_SCALE_KEYWORDS", "num_instances cpu memory")
     name = ''
     type = ProcType.worker
     image = ''
@@ -134,6 +233,7 @@ class Proc:
     cpu = 0
     memory = '32m'
     port = {}
+    ports = []
     mountpoint = []
     https_only = True
     healthcheck = ''
@@ -144,7 +244,7 @@ class Proc:
     volumes = []
     system_volumes = []
     cloud_volumes = {}
-    secret_files = [] #for proc
+    secret_files = []  # for proc
     service_name = ''
     allow_clients = ''
     backup = []
@@ -164,12 +264,12 @@ class Proc:
         if len(proc_info) == 2:
             self.name = proc_info[1]
             if proc_info[0] in PROC_TYPES.split():
-                self.type = ProcType[proc_info[0]]  ## 放弃meta里面的type定义
+                self.type = ProcType[proc_info[0]]  # 放弃meta里面的type定义
             else:
                 self.type = ProcType[meta.get('type', 'worker')]
         if len(proc_info) == 1:
             self.name = proc_info[0]
-            self.type = ProcType[proc_info[0]]  ## 放弃meta里面的type定义
+            self.type = ProcType[proc_info[0]]  # 放弃meta里面的type定义
         self.image = meta.get('image', default_image_name)
         meta_entrypoint = meta.get('entrypoint')
         self.entrypoint = self.__to_exec_form(meta_entrypoint)
@@ -178,7 +278,7 @@ class Proc:
         self.user = meta.get('user', '')
         self.working_dir = meta.get('workdir') or meta.get('working_dir', '')
         dns_search_meta = meta.get('dns_search', [])
-        app_dns_search = "%s.lain"%get_app_domain(appname)
+        app_dns_search = "%s.lain" % get_app_domain(appname)
         if app_dns_search not in dns_search_meta:
             dns_search_meta.append(app_dns_search)
         self.dns_search = dns_search_meta
@@ -192,6 +292,18 @@ class Proc:
             if self.type == ProcType.web:
                 _port = Port()
                 self.port = {_port.port: _port}
+        ports_meta = meta.get('ports', None)
+        self.ports = []
+        self.labels = {}
+        self.filters = []
+        if ports_meta:
+            self.ports = self._load_ports_mapping(ports_meta)
+        labels_meta = meta.get('labels', None)
+        if labels_meta:
+            self.labels = self._load_labels(labels_meta)
+        filters_meta = meta.get('filters', None)
+        if filters_meta:
+            self.filters = self._load_filters(filters_meta)
 
         stateful_meta = meta.get('stateful', False)
         if stateful_meta:
@@ -199,14 +311,17 @@ class Proc:
         else:
             self.stateful = False
 
-        self.setup_time = restrict_value(meta.get('setup_time', 0), MIN_SETUP_TIME, MAX_SETUP_TIME)
-        self.kill_timeout = restrict_value(meta.get('kill_timeout', 10), MIN_KILL_TIMEOUT, MAX_KILL_TIMEOUT)
+        self.setup_time = restrict_value(
+            meta.get('setup_time', 0), MIN_SETUP_TIME, MAX_SETUP_TIME)
+        self.kill_timeout = restrict_value(
+            meta.get('kill_timeout', 10), MIN_KILL_TIMEOUT, MAX_KILL_TIMEOUT)
 
         # TODO 检验mountpoint段是否合法
         # ProcType.web 的 proc 有 mountpoint
         if self.type == ProcType.web:
             mountpoint_meta = meta.get('mountpoint', None)
-            self.https_only = meta.get('https_only', False)  # TODO: change to "True" in near-future
+            # TODO: change to "True" in near-future
+            self.https_only = meta.get('https_only', False)
             app_domain = get_app_domain(appname)
             domains = cluster_config.get('domains', [DOMAIN])
 
@@ -232,7 +347,8 @@ class Proc:
             else:
                 # ProcName != 'web' 则必须有另外的 mountpoint
                 if not mountpoint_meta or not isinstance(mountpoint_meta, list):
-                    raise Exception('proc (type is web but name is not web) should have own mountpoint.\nkeyword: %s\nmeta: %s' % (keyword, meta))
+                    raise Exception(
+                        'proc (type is web but name is not web) should have own mountpoint.\nkeyword: %s\nmeta: %s' % (keyword, meta))
                 else:
                     self.mountpoint = mountpoint_meta
             to_remove = []
@@ -261,11 +377,12 @@ class Proc:
             elif isinstance(volume, dict):
                 if len(volume) == 0:
                     continue
-                key = volume.keys()[0] # there's only one key in this dict
+                key = volume.keys()[0]  # there's only one key in this dict
 
                 for attr, setting in volume[key].iteritems():
                     if attr == "backup_full" or attr == "backup_increment":
-                        schedule, expire = setting.get('schedule', ""), setting.get('expire', "")
+                        schedule, expire = setting.get(
+                            'schedule', ""), setting.get('expire', "")
                         if schedule == "":
                             continue
                         self.backup.append({
@@ -276,18 +393,20 @@ class Proc:
                             'mode': 'increment' if attr == "backup_increment" else "full",
                             'preRun': setting.get('pre_run', ""),
                             'postRun': setting.get('post_run', ""),
-                            }
+                        }
                         )
                 self.volumes.append(lain_based_path(key))
         for volume in self.volumes:
             if not validate_volume(volume):
-                raise Exception('invalid volume: abs volume {} should not in {}'.format(volume, INVALID_VOLUMES))
+                raise Exception('invalid volume: abs volume {} should not in {}'.format(
+                    volume, INVALID_VOLUMES))
 
         self.logs = []
         logs_meta = meta.get('logs', [])
         for log in logs_meta:
             if log.startswith('/'):
-                raise Exception("Log in Logs section MUST be a relative path based on /lain/logs. Wrong path: %s" % (log) )
+                raise Exception(
+                    "Log in Logs section MUST be a relative path based on /lain/logs. Wrong path: %s" % (log))
             if log not in self.logs:
                 self.logs.append(log)
         if logs_meta:
@@ -298,7 +417,7 @@ class Proc:
 
         self.cloud_volumes = self._load_cloud_volumes(meta)
 
-        #for secret_files
+        # for secret_files
         self.secret_files = meta.get('secret_files') or []
         # add /lain/app for relative paths
         self.secret_files = parse_path(self.secret_files)
@@ -307,7 +426,8 @@ class Proc:
         if self.type == ProcType.portal:
             service_name_meta = meta.get('service_name', None)
             if service_name_meta is None:
-                raise Exception('proc (type is portal) should have own service_name.\nkeyword: %s\nmeta: %s' % (keyword, meta))
+                raise Exception(
+                    'proc (type is portal) should have own service_name.\nkeyword: %s\nmeta: %s' % (keyword, meta))
             allow_clients_meta = meta.get('allow_clients', "**")
             self.service_name = service_name_meta
             self.allow_clients = allow_clients_meta
@@ -318,7 +438,8 @@ class Proc:
         if vol_info:
             vol_type = vol_info.get('type', 'multi')
             if vol_type not in CloudVolumeType:
-                raise Exception("cloud volume type %s not supported, only multi and single are valid" % vol_type)
+                raise Exception(
+                    "cloud volume type %s not supported, only multi and single are valid" % vol_type)
             vol_dirs = []
             for vol in vol_info.get('dirs') or []:
                 vol_dirs.append(lain_based_path(vol))
@@ -337,6 +458,21 @@ class Proc:
             else:
                 raise Exception('not supported port desc: %s' % (m, ))
         return _port
+
+    def _load_ports_mapping(self, meta):
+        ps = Ports()
+        ps.load(meta)
+        return ps.ports
+
+    def _load_labels(self, meta):
+        lbs = Labels()
+        lbs.load(meta)
+        return lbs.labels
+
+    def _load_filters(self, meta):
+        flts = Filters()
+        flts.load(meta)
+        return flts.filters
 
     def patch(self, payload):
         # 这里仅限于proc自身信息的变化，不可包括meta_version
@@ -382,6 +518,8 @@ class Proc:
             data['healthcheck'] = self.healthcheck
         if self.logs:
             data['logs'] = self.logs
+        if self.ports:
+            data['ports'] = self.ports
         return json.dumps(data)
 
 
@@ -394,21 +532,22 @@ class Prepare:
         if isinstance(meta, list):
             self.version = "0"
             self.script = meta
-            self.script = ['( %s )'%s for s in self.script]
+            self.script = ['( %s )' % s for s in self.script]
             self.keep = []
         else:
             version = str(meta.get('version', '0')).strip()
             if VALID_PREPARE_VERSION_PATERN.match(version):
                 self.version = version
             else:
-                raise Exception("invalid prepare version: %s\nVALID_PREPARE_VERSION_PATERN: r\"^[a-zA-Z0-9]+$\""%version)
+                raise Exception(
+                    "invalid prepare version: %s\nVALID_PREPARE_VERSION_PATERN: r\"^[a-zA-Z0-9]+$\"" % version)
             self.script = meta.get('script') or []
-            self.script = ['( %s )'%s for s in self.script]
+            self.script = ['( %s )' % s for s in self.script]
             self.keep = meta.get('keep') or self.keep
         keep_script = ""
         for k in self.keep:
-            keep_script += '| grep -v \'\\b%s\\b\' '%k
-        clean_script = "( ls -1 %s| xargs rm -rf )"%keep_script
+            keep_script += '| grep -v \'\\b%s\\b\' ' % k
+        clean_script = "( ls -1 %s| xargs rm -rf )" % keep_script
         self.script.append(clean_script)
 
 
@@ -422,7 +561,7 @@ class Build:
         if base is None:
             raise Exception('no base in section build')
         self.script = meta.get('script') or []
-        self.script = ['( %s )'%s for s in self.script]
+        self.script = ['( %s )' % s for s in self.script]
         self.base = base
         prepare = meta.get('prepare', {})
         self.prepare = Prepare()
@@ -436,7 +575,7 @@ class Release:
 
     def load(self, meta):
         self.script = meta.get('script') or []
-        self.script = ['( %s )'%s for s in self.script]
+        self.script = ['( %s )' % s for s in self.script]
         self.dest_base = meta.get('dest_base') or self.dest_base
         copy_meta = meta.get('copy') or []
         self.copy = []
@@ -457,7 +596,7 @@ class Test:
 
     def load(self, meta):
         self.script = meta.get('script') or []
-        self.script = ['( %s )'%s for s in self.script]
+        self.script = ['( %s )' % s for s in self.script]
 
 
 class LainConf:
@@ -477,8 +616,10 @@ class LainConf:
         if self.appname is None:
             raise Exception('invalid lain conf: no appname')
         if self.appname in INVALID_APPNAMES:
-            raise Exception('invalid lain conf: appname {} should not in {}'.format(self.appname, INVALID_APPNAMES))
-        self.procs = self._load_procs(meta, self.appname, meta_version, default_image, registry=cluster_config.get('registry', PRIVATE_REGISTRY), domains=cluster_config.get('domains', [DOMAIN]))
+            raise Exception('invalid lain conf: appname {} should not in {}'.format(
+                self.appname, INVALID_APPNAMES))
+        self.procs = self._load_procs(meta, self.appname, meta_version, default_image, registry=cluster_config.get(
+            'registry', PRIVATE_REGISTRY), domains=cluster_config.get('domains', [DOMAIN]))
         self.build = self._load_build(meta)
         self.release = self._load_release(meta)
         self.test = self._load_test(meta)
@@ -494,9 +635,11 @@ class LainConf:
 
     def _load_procs(self, meta, appname, meta_version, default_image, **cluster_config):
         _procs = {}
+
         def _proc_load(key, meta, **cluster_config):
             _proc = Proc()
-            _proc.load(key, meta, appname, meta_version, default_image, registry=cluster_config.get('registry', PRIVATE_REGISTRY), domains=cluster_config.get('domains', [DOMAIN]))
+            _proc.load(key, meta, appname, meta_version, default_image, registry=cluster_config.get(
+                'registry', PRIVATE_REGISTRY), domains=cluster_config.get('domains', [DOMAIN]))
 
             # TODO 更多错误校验
             if _proc.name in _procs.keys():
@@ -516,8 +659,10 @@ class LainConf:
                 _service_portal_meta = _service_worker_meta.pop('portal')
                 _service_portal_meta['service_name'] = _key[1]
 
-                _proc_load(_service_worker_key, _service_worker_meta, **cluster_config)
-                _proc_load(_service_portal_key, _service_portal_meta, **cluster_config)
+                _proc_load(_service_worker_key,
+                           _service_worker_meta, **cluster_config)
+                _proc_load(_service_portal_key,
+                           _service_portal_meta, **cluster_config)
             else:
                 _proc_load(key, meta[key], **cluster_config)
         return _procs
@@ -534,10 +679,10 @@ class LainConf:
             try:
                 for k, v in meta.iteritems():
                     tmp_v = copy.deepcopy(v)
-                    use_resources[k] = {'services' : tmp_v.pop('services')}
+                    use_resources[k] = {'services': tmp_v.pop('services')}
                     use_resources[k]['context'] = tmp_v
             except Exception:
-                raise Exception("invalid resource defination: %s"%meta)
+                raise Exception("invalid resource defination: %s" % meta)
             return use_resources
         else:
             return {}
@@ -577,12 +722,14 @@ def get_app_domain(appname):
         app_domain = appname
     return app_domain
 
+
 def resource_instance_name(resource_appname, client_appname):
     return "resource.{}.{}".format(resource_appname, client_appname)
 
+
 def render_resource_instance_meta(
-            resource_appname, resource_meta_version, resource_meta_template,
-            client_appname, context, registry, domains):
+        resource_appname, resource_meta_version, resource_meta_template,
+        client_appname, context, registry, domains):
     # 用 use_resources 里的变量渲染 resource 模板
     instance_yaml = render_instance_yaml(resource_meta_template, context)
     instance_meta = yaml.dump(instance_yaml, default_flow_style=False)
@@ -599,6 +746,7 @@ def render_resource_instance_meta(
     # return 最终的 yaml dump
     return yaml.dump(instance_yaml, default_flow_style=False)
 
+
 def render_instance_yaml(resource_meta_template, context):
     instance_yaml = yaml.safe_load(resource_meta_template)
     for key in instance_yaml:
@@ -607,8 +755,10 @@ def render_instance_yaml(resource_meta_template, context):
         elif type(instance_yaml[key]) == list:
             iterate_parse_yaml_list(instance_yaml[key], context)
         else:
-            instance_yaml[key] = get_jinja_render_value(instance_yaml[key], context)
+            instance_yaml[key] = get_jinja_render_value(
+                instance_yaml[key], context)
     return instance_yaml
+
 
 def iterate_parse_yaml_dict(dict_yaml, context):
     for key in dict_yaml:
@@ -619,6 +769,7 @@ def iterate_parse_yaml_dict(dict_yaml, context):
         else:
             dict_yaml[key] = get_jinja_render_value(dict_yaml[key], context)
 
+
 def iterate_parse_yaml_list(list_yaml, context):
     for index in range(len(list_yaml)):
         if type(list_yaml[index]) == list:
@@ -626,7 +777,9 @@ def iterate_parse_yaml_list(list_yaml, context):
         elif type(list_yaml[index]) == dict:
             iterate_parse_yaml_dict(list_yaml[index], context)
         else:
-            list_yaml[index] = get_jinja_render_value(list_yaml[index], context)
+            list_yaml[index] = get_jinja_render_value(
+                list_yaml[index], context)
+
 
 def get_jinja_render_value(value, context):
     template = Template(str(value))
