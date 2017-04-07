@@ -108,7 +108,6 @@ class Labels:
             for m in meta:
                 key, value = self.parse(m)
                 self.labels[key] = value
-        print self.labels
 
     def parse(self, meta):
         m = self.patten.match(meta)
@@ -130,7 +129,6 @@ class Filters:
             for m in meta:
                 self.parse(m)
                 self.filters.append(m)
-        print self.filters
 
     def parse(self, meta):
         m = self.patten.match(meta)
@@ -143,18 +141,27 @@ class Ports:
     SECTION_KEYWORDS = Enum('SECTION_KEYWORDS', 'ports')
     MAX_PORT = 10000
     MIN_PORT = 9500
-    PORT_MAP_FORMAT = '{src_port}:{dst_port}/{proto}'
 
     def load(self, meta):
         self.ports = []
         self.src_port = []
         if isinstance(meta, str):
-            self.ports = [self.parse(meta)]
-        elif isinstance(meta, list):
-            for m in meta:
-                self.ports.append(self.parse(m))
+            src_port, dst_port, proto = self.parse(m)
+            port_mapping = {'srcport': src_port,
+                            'dstport': dst_port, 'proto': proto}
+            self.ports = [port_mapping]
+        elif isinstance(meta, dict):
+            for m, v in meta.items():
+                src_port, dst_port, proto = self.parse(m)
+                port_mapping = {'srcport': src_port,
+                                'dstport': dst_port, 'proto': proto}
+                if isinstance(v, dict):
+                    port_mapping.update(v)
+                self.ports.append(port_mapping)
 
     def parse(self, meta):
+        if isinstance(meta, int):
+            meta = str(meta)
         values = meta.split('/')
         proto = SocketType.tcp.name
         if len(values) == 2 and (values[1] == SocketType.udp.name or values[1] == SocketType.tcp.name):
@@ -179,13 +186,13 @@ class Ports:
         dst_port = self.valid_port(dst_port)
         if dst_port < 1 or dst_port > 65535:
             raise Exception('dst port should between %s and %s' % (1, 65535))
-        return self.PORT_MAP_FORMAT.format(src_port=src_port, dst_port=dst_port, proto=proto)
+        return src_port, dst_port, proto
 
     def valid_port(self, portstr):
         try:
             port = int(portstr)
         except ValueError:
-            raise Exception('not supported ports desc %s' % (meta, ))
+            raise Exception('not supported ports desc %s' % (portstr, ))
         return port
 
 
