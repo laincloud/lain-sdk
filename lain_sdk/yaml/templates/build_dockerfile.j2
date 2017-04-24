@@ -9,3 +9,4 @@ WORKDIR {{ workdir }}
 {% if scripts|length > 0 %}
 RUN {{ ' && '.join(scripts) }}
 {% endif %}
+
