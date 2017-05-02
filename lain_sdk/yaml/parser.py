@@ -244,6 +244,7 @@ class Proc:
     mountpoint = []
     https_only = True
     healthcheck = ''
+    container_healthcheck = {}
     user = ''
     working_dir = ''
     dns_search = []
@@ -373,6 +374,7 @@ class Proc:
             healthcheck_meta = meta.get('healthcheck', None)
             self.healthcheck = healthcheck_meta if healthcheck_meta else ''
 
+        self.container_healthcheck = meta.get('container_healthcheck', None)
         # TODO 检验env段是否合法
         # - 是否是list
         self.env = meta.get('env') or self.env
