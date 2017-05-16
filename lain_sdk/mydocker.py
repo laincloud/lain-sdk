@@ -21,7 +21,7 @@ DOCKER_BASE_URL = os.environ.get('DOCKER_HOST', '')
 # docker_reg set through param or env LAIN_DOCKER_REGISTRY
 
 
-def _docker(args, cwd=None, env={}, capture_output=False, print_stdout=True):
+def _docker(args, cwd=None, env=os.environ, capture_output=False, print_stdout=True):
     """
     Wrapper of Docker client. Use subprocess instead of docker-py to
     avoid API version inconsistency problems.
@@ -49,7 +49,7 @@ def _docker(args, cwd=None, env={}, capture_output=False, print_stdout=True):
         return output
     else:
         retcode = subprocess.call(cmd, env=env, cwd=cwd, stderr=subprocess.STDOUT,
-                stdout=(None if print_stdout else open('/dev/null', 'w')))
+                                  stdout=(None if print_stdout else open('/dev/null', 'w')))
         return retcode
 
 
