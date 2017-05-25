@@ -360,7 +360,7 @@ class LainYaml(object):
 
         self.ignore = ['.git', '.vagrant']
 
-        self.gen_name = partial(mydocker.gen_image_name, appname=self.appname)
+        self.gen_name = partial(mydocker.gen_image_name, appname=self.appname, meta_version=meta_version(self.ctx))
 
         phases = ('prepare', 'build', 'release', 'test', 'meta')
         self.img_names = {phase: self.gen_name(
@@ -398,7 +398,6 @@ class LainYaml(object):
         return meta_version(self.ctx, sha1)
 
     def tag_meta_version(self, name, sha1=''):
-        tagged = '%s/%s-%s' % (PRIVATE_REGISTRY, name,
-                               meta_version(self.ctx, sha1))
+        tagged = '%s/%s' % (PRIVATE_REGISTRY, name)
         mydocker.tag(name, tagged)
         return tagged
