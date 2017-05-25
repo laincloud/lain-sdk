@@ -43,7 +43,8 @@ def _docker(args, cwd=None, env=os.environ, capture_output=False, print_stdout=T
 
     if capture_output:
         try:
-            output = subprocess.check_output(cmd, env=env, cwd=cwd, stderr=subprocess.STDOUT)
+            output = subprocess.check_output(
+                cmd, env=env, cwd=cwd, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             output = e.output
         return output
@@ -147,15 +148,18 @@ def remove_container(container_id):
 
 
 def copy_to_host(image_name, docker_path, host_path, directory=False):
-    info('copying {} in {} to {} in host ...'.format(docker_path, image_name, host_path))
-    # can not use `-v /vagrant:xxx` because `/vagrant` itself in `vagrant` is a mount point, buggy
+    info('copying {} in {} to {} in host ...'.format(
+        docker_path, image_name, host_path))
+    # can not use `-v /vagrant:xxx` because `/vagrant` itself in `vagrant` is
+    # a mount point, buggy
     if directory:
         cp = ['cp', '-r']
     else:
         cp = ['cp']
     inter_host_dir = tempfile.mkdtemp()
     inter_dock_dir = '/lain_share'
-    docker_args = ['run', '--rm', '-v', '{}:{}'.format(inter_host_dir, inter_dock_dir), image_name]
+    docker_args = ['run', '--rm', '-v',
+                   '{}:{}'.format(inter_host_dir, inter_dock_dir), image_name]
     docker_args += cp + [docker_path, inter_dock_dir]
     try:
         _docker(docker_args)
@@ -163,7 +167,8 @@ def copy_to_host(image_name, docker_path, host_path, directory=False):
         error(e.output)
         exit(1)
 
-    inter_host_path = os.path.join(inter_host_dir, os.path.basename(docker_path))
+    inter_host_path = os.path.join(
+        inter_host_dir, os.path.basename(docker_path))
     try:
         shutil.copy(inter_host_path, host_path)
     except (IOError, shutil.Error) as e:
@@ -304,7 +309,7 @@ def get_tag_list_in_registry(registry, appname):
         headers = None
     try:
         r = requests.get(tag_list_url, headers=headers,
-                timeout=(REGISTRY_CONNECT_TIMEOUT, REGISTRY_READ_TIMEOUT))
+                         timeout=(REGISTRY_CONNECT_TIMEOUT, REGISTRY_READ_TIMEOUT))
         return r.json()['tags']
     except:
         return []

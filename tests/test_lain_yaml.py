@@ -5,6 +5,7 @@ from lain_sdk.lain_yaml import LainYaml
 
 YAML = 'tests/lain.yaml'
 
+
 class TestLainYaml:
 
     def test_initialization(self):
@@ -22,7 +23,7 @@ class TestLainYaml:
         assert y.release.dest_base == 'ubuntu'
         assert len(y.release.copy) == 1
         assert y.release.copy[0]['src'] == 'hello'
-        assert y.release.copy[0]['dest'] ==  '/usr/bin/hello'
+        assert y.release.copy[0]['dest'] == '/usr/bin/hello'
         assert y.test.script == ['( go test )']
         assert y.procs['web'].cmd == ['hello']
         assert y.procs['web'].setup_time == 40
@@ -42,4 +43,3 @@ class TestLainYaml:
         assert len(y.img_names) == 5
         assert len(y.img_temps) == 5
         assert len(y.img_builders) == 5
-

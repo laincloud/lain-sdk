@@ -7,15 +7,14 @@ repo_name = "aaa"
 meta_version = "bbbb"
 
 
-
 comd = ""
-comd += "fileName = " + "'"+ fileName +"'\n"
-comd += "repo_name = " + "'"+ repo_name +"'\n"
-comd += "meta_version = " + "'"+ meta_version +"'\n"
+comd += "fileName = " + "'" + fileName + "'\n"
+comd += "repo_name = " + "'" + repo_name + "'\n"
+comd += "meta_version = " + "'" + meta_version + "'\n"
 
 print comd
 
-#lua.eval("dostring("+comd+")")
+# lua.eval("dostring("+comd+")")
 
 fo = open("jsonForPY.lua", "w+")
 fo.write(comd)

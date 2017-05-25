@@ -5,6 +5,7 @@ from lain_sdk.yaml.parser import parse_path
 
 
 class TestLainParser:
+
     def test_parse_path(self):
         somepaths = ['hello', '/ab/dfafd/ttt/fad', 'ok/../hello', '../hh',
                      '/dfadf', '/', '', ' ', 'waht/', "  hello", '   /hello',
