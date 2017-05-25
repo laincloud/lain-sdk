@@ -22,15 +22,17 @@ class PathWatcher(object):
 
     Current implementation leveraging md5
     """
-    
+
     def __init__(self, path, ignore_paths=[]):
-        self._dump = '/tmp/.lain_watcher_{}'.format(hashlib.sha1(path).hexdigest())
+        self._dump = '/tmp/.lain_watcher_{}'.format(
+            hashlib.sha1(path).hexdigest())
 
         self.path = path
         if self.path.endswith('/') and len(self.path) > 1:
             self.path = self.path[:-1]
 
-        self.ignore_patterns = [] # path in patterns relative to self.path, not starting with "./"
+        # path in patterns relative to self.path, not starting with "./"
+        self.ignore_patterns = []
         for path in ignore_paths:
             if path.endswith('/') and len(path) > 1:
                 path = path[:-1]
@@ -48,7 +50,7 @@ class PathWatcher(object):
 
     def _hash(self, path):
         h = hashlib.md5()
-        try: 
+        try:
             with open(path) as f:
                 h.update(f.read())
             return h.hexdigest()
@@ -69,7 +71,7 @@ class PathWatcher(object):
             for dirpath, dirnames, filenames in os.walk(self.path):
                 # self.path './yy' dirpath './yy/xxxx' => 'xxxx'
                 # self.path '/x/y' dirpath '/x/y/z' => 'z'
-                dirpath = dirpath[len(self.path)+1:]
+                dirpath = dirpath[len(self.path) + 1:]
                 if self.is_ignored(dirpath):
                     continue
                 for filename in filenames:
@@ -89,5 +91,3 @@ class PathWatcher(object):
 
     def refresh(self):
         rm(self._dump)
-        
-

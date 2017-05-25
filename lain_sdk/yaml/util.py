@@ -6,9 +6,11 @@ import os
 import yaml
 from ..util import get_cfd
 
+
 def load_yaml(path):
     with open(path) as f:
         return yaml.safe_load(f.read())
+
 
 def write_yaml(path, dic):
     with open(path, 'w') as f:
