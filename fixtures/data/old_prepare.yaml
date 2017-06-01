@@ -8,6 +8,9 @@ build:
     - rm -rf /lain/app/*
   script:
     - pip install -r pip-req.txt
+  build_arg:
+    - ARG1=arg1
+    - ARG2=arg2
 
 test:
   script:

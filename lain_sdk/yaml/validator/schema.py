@@ -213,6 +213,10 @@ build = {
             "description": "scripts to build the app",
             "items": {"type": "string"}
         },
+        "build_arg": {
+            "description": "build args to build the app",
+            "items": {"type": "string"}
+        },
     },
     "additionalProperties": False,
     "required": ["base", "script"]

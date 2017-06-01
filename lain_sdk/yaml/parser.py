@@ -553,6 +553,7 @@ class Prepare:
             self.script = meta.get('script') or []
             self.script = ['( %s )' % s for s in self.script]
             self.keep = meta.get('keep') or self.keep
+            self.build_arg = meta.get('build_arg') or []
         keep_script = ""
         for k in self.keep:
             keep_script += '| grep -v \'\\b%s\\b\' ' % k
@@ -571,6 +572,7 @@ class Build:
             raise Exception('no base in section build')
         self.script = meta.get('script') or []
         self.script = ['( %s )' % s for s in self.script]
+        self.build_arg = meta.get('build_arg') or []
         self.base = base
         prepare = meta.get('prepare', {})
         self.prepare = Prepare()
