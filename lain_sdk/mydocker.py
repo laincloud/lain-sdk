@@ -6,7 +6,7 @@ import shutil
 import tempfile
 import requests
 import subprocess
-from docker import Client
+import docker
 from jinja2 import Template
 from .util import (info, error,
                    recur_create_file, rm,
@@ -326,10 +326,10 @@ def get_tag_list_in_registry(registry, appname):
 
 def get_tag_list_in_docker_daemon(registry, appname):
     tag_list = []
-    c = Client()
-    imgs = c.images()
+    c = docker.from_env()
+    imgs = c.images.list()
     for img in imgs:
-        repo_tags = img['RepoTags']
+        repo_tags = img.tags
         if not repo_tags:
             continue
         for repo_tag in repo_tags:
@@ -346,10 +346,10 @@ def get_tag_list_in_docker_daemon(registry, appname):
 
 def get_tag_list_using_by_containers(registry, appname):
     tag_list = []
-    c = Client()
-    containers = c.containers()
+    c = docker.from_env()
+    containers = c.containers.list()
     for container in containers:
-        repo, tag = container['Image'].split(":")
+        repo, tag = container.attrs['Config']['Image'].split(":")
         if repo == "%s/%s" % (registry, appname) and tag not in tag_list:
             tag_list.append(tag)
     return tag_list

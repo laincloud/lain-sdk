@@ -147,10 +147,9 @@ def _get_registry_auth_url(response):
 def get_jwt_for_registry(auth_url, registry, appname):
     # get auth username and password from dockercfg
     try:
-        cfgs = auth.load_config()
-        cfg = cfgs[registry]
-        username = cfg['username']
-        password = cfg['password']
+        cfg = auth.resolve_authconfig(auth.load_config(), registry=registry)
+        username = cfg['username'] if 'username' in cfg else cfg['Username']
+        password = cfg['password'] if 'password' in cfg else cfg['Password']
         # phase, phase_config = get_phase_config_from_registry(registry)
         # domain = phase_config.get(user_config.domain_key, '')
         # only use `lain.local` as service
