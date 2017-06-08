@@ -9,7 +9,7 @@ requirements = [
     'requests==2.6.0',
     'six==1.9.0',
     'websocket-client==0.32.0',
-    'docker-py==1.7.2',
+    'docker==2.3.0',
     'pytest==2.7.0',
     'pytest-random==0.2',
     'pytest-cov==1.8.1',
