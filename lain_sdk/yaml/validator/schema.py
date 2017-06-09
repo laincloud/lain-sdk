@@ -22,6 +22,11 @@ appname = {
     "pattern": appname_pattern
 }
 
+giturl = {
+    "description": "bind git url for app",
+    "type": "string"
+}
+
 apptype = {
     "description": "apptype for app, only resource and app allowed",
     "type": "string",
@@ -331,6 +336,7 @@ schema = {
     "type": "object",
     "properties": {
         "appname": appname,
+        "giturl": giturl,
         "apptype": apptype,
         "build": build,
         "test": test,
