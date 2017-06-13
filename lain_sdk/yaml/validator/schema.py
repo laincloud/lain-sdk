@@ -12,6 +12,7 @@ typed_proc_pattern = "^(web|worker|oneshot)" + "(\." + core_pattern + ")?$"
 service_proc_pattern = "^(service\.)" + core_pattern + "$"
 portal_proc_pattern = "^(portal\.)" + core_pattern + "$"
 apptype_pattern = "^(resource|app)$"
+memory_pattern = "^[1-9]+[0-9]*[mMgG]$"
 
 path_pattern = "^.*$"
 
@@ -36,6 +37,26 @@ backup_policy = {
         "schedule": {"type": "string"},
     },
     "additionalProperties": False,
+}
+
+cthealthcheck_options = {
+    "type": "object",
+    "properties": {
+        "interval": {"type": "integer"},
+        "timeout": {"type": "integer"},
+        "retries": {"type": "integer"},
+    },
+    "additionalProperties": False,
+}
+
+cthealthcheck = {
+    "type": "object",
+    "properties": {
+        "cmd": {"type": "string"},
+        "options": cthealthcheck_options,
+    },
+    "additionalProperties": False,
+    "required": ["cmd"]
 }
 
 persistent_dirs_item = {
@@ -69,7 +90,7 @@ cloud_volumes_policy = {
         },
     },
     "additionalProperties": False,
-    "required": [ "dirs" ]
+    "required": ["dirs"]
 }
 
 exec_form_or_shell_form = {
@@ -84,6 +105,12 @@ exec_form_or_shell_form = {
     ]
 }
 
+memory = {
+    "description": "memory limit",
+    "type": "string",
+    "pattern": memory_pattern
+}
+
 typed_proc_properties = {
     "user": {"type": "string"},
     "image": {"type": "string"},
@@ -93,9 +120,13 @@ typed_proc_properties = {
     "working_dir": {"type": "string"},
     "num_instances": {"type": "integer"},
     "cpu": {"type": "integer"},
-    "memory": {"type": "string"},
+    "labels": {"itmes": {"type": "string"}},
+    "filters": {"itmes": {"type": "string"}},
+    "memory": memory,
     "port": {"type": "integer"},
+    "ports": {"itmes": {"type": "string"}},
     "healthcheck": {"type": "string"},
+    "container_healthcheck": cthealthcheck,
     "env": {"items": {"type": "string"}},
     "persistent_dirs": {"items": persistent_dirs_item},
     "volumes": {"items": persistent_dirs_item},
@@ -113,14 +144,16 @@ base_proc_properties_extra = {
     "type": {"type": "string"},
 }
 
-base_proc_properties = dict(list(typed_proc_properties.items()) + list(base_proc_properties_extra.items()))
+base_proc_properties = dict(
+    list(typed_proc_properties.items()) + list(base_proc_properties_extra.items()))
 
 portal_proc_properties_extra = {
     "service_name": {"type": "string"},
     "allow_clients": {"type": "string"},
 }
 
-portal_proc_properties = dict(list(typed_proc_properties.items()) + list(portal_proc_properties_extra.items()))
+portal_proc_properties = dict(
+    list(typed_proc_properties.items()) + list(portal_proc_properties_extra.items()))
 
 service_proc_properties_extra = {
     "portal": {
@@ -130,7 +163,8 @@ service_proc_properties_extra = {
     },
 }
 
-service_proc_properties = dict(list(base_proc_properties.items()) + list(service_proc_properties_extra.items()))
+service_proc_properties = dict(
+    list(base_proc_properties.items()) + list(service_proc_properties_extra.items()))
 
 build__prepare = {
     "type": "object",
@@ -154,7 +188,7 @@ build__prepare = {
         },
     },
     "additionalProperties": False,
-    "required": [ "script" ]
+    "required": ["script"]
 }
 
 build__prepare_old = {
@@ -179,9 +213,13 @@ build = {
             "description": "scripts to build the app",
             "items": {"type": "string"}
         },
+        "build_arg": {
+            "description": "build args to build the app",
+            "items": {"type": "string"}
+        },
     },
     "additionalProperties": False,
-    "required": [ "base", "script" ]
+    "required": ["base", "script"]
 }
 
 test = {
@@ -194,7 +232,7 @@ test = {
         },
     },
     "additionalProperties": False,
-    "required": [ "script" ]
+    "required": ["script"]
 }
 
 release = {
@@ -225,7 +263,7 @@ release = {
         },
     },
     "additionalProperties": False,
-    "required": [ "dest_base", "copy" ]
+    "required": ["dest_base", "copy"]
 }
 
 use_services = {
@@ -332,5 +370,5 @@ schema = {
         },
     },
     "additionalProperties": False,
-    "required": [ "appname", "build"]
+    "required": ["appname", "build"]
 }

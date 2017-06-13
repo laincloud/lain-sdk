@@ -13,7 +13,9 @@ build:
       - bundle
   script:
     - pip install -r pip-req.txt
-
+  build_arg:
+    - ARG1=arg1
+    - ARG2=arg2
 test:
   script:
     - make pylint test

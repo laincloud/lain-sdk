@@ -7,6 +7,8 @@ build:
     script:
       - mkdir -p /lain/app/bundle
       - echo 0 > /lain/app/bundle/prepare_version
+    build_arg:
+      - ARG1=arg1
     keep:
       - bundle
   script:

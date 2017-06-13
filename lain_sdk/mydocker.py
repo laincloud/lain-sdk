@@ -6,7 +6,7 @@ import shutil
 import tempfile
 import requests
 import subprocess
-from docker import Client
+import docker
 from jinja2 import Template
 from .util import (info, error,
                    recur_create_file, rm,
@@ -21,7 +21,7 @@ DOCKER_BASE_URL = os.environ.get('DOCKER_HOST', '')
 # docker_reg set through param or env LAIN_DOCKER_REGISTRY
 
 
-def _docker(args, cwd=None, env={}, capture_output=False, print_stdout=True):
+def _docker(args, cwd=None, env=os.environ, capture_output=False, print_stdout=True):
     """
     Wrapper of Docker client. Use subprocess instead of docker-py to
     avoid API version inconsistency problems.
@@ -43,13 +43,14 @@ def _docker(args, cwd=None, env={}, capture_output=False, print_stdout=True):
 
     if capture_output:
         try:
-            output = subprocess.check_output(cmd, env=env, cwd=cwd, stderr=subprocess.STDOUT)
+            output = subprocess.check_output(
+                cmd, env=env, cwd=cwd, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             output = e.output
         return output
     else:
         retcode = subprocess.call(cmd, env=env, cwd=cwd, stderr=subprocess.STDOUT,
-                stdout=(None if print_stdout else open('/dev/null', 'w')))
+                                  stdout=(None if print_stdout else open('/dev/null', 'w')))
         return retcode
 
 
@@ -97,9 +98,18 @@ def gen_dockerignore(path, ignore):
         f.write('# end of lain\n')
 
 
-def build_image(name, context):
+def build_image(name, context, build_args):
     info('building image {} ...'.format(name))
     docker_args = ['build', '-t', name, '.']
+    if build_args:
+        docker_args = ['build', '-t', name]
+        for arg in build_args:
+            key, val = arg.split('=', 1)
+            if val.startswith('$'):
+                val = os.environ[val[1:]]
+            docker_args.append('--build-arg')
+            docker_args.append('{}={}'.format(key, val))
+        docker_args.append('.')
     retcode = _docker(docker_args, cwd=context)
     if retcode != 0:
         name = None
@@ -109,14 +119,14 @@ def build_image(name, context):
     return name
 
 
-def build(name, context, ignore, template, params):
+def build(name, context, ignore, template, params, build_args):
     dockerfile_path = os.path.join(context, 'Dockerfile')
     dockerignore_path = os.path.join(context, '.dockerignore')
     dockerignore_backup = os.path.join(context, '.dockerignore.backup')
     try:
         gen_dockerfile(dockerfile_path, template, params)
         gen_dockerignore(dockerignore_path, ignore)
-        name = build_image(name, context)
+        name = build_image(name, context, build_args)
     finally:
         for path in [dockerfile_path, dockerignore_path]:
             if os.path.exists(path):
@@ -147,15 +157,18 @@ def remove_container(container_id):
 
 
 def copy_to_host(image_name, docker_path, host_path, directory=False):
-    info('copying {} in {} to {} in host ...'.format(docker_path, image_name, host_path))
-    # can not use `-v /vagrant:xxx` because `/vagrant` itself in `vagrant` is a mount point, buggy
+    info('copying {} in {} to {} in host ...'.format(
+        docker_path, image_name, host_path))
+    # can not use `-v /vagrant:xxx` because `/vagrant` itself in `vagrant` is
+    # a mount point, buggy
     if directory:
         cp = ['cp', '-r']
     else:
         cp = ['cp']
     inter_host_dir = tempfile.mkdtemp()
     inter_dock_dir = '/lain_share'
-    docker_args = ['run', '--rm', '-v', '{}:{}'.format(inter_host_dir, inter_dock_dir), image_name]
+    docker_args = ['run', '--rm', '-v',
+                   '{}:{}'.format(inter_host_dir, inter_dock_dir), image_name]
     docker_args += cp + [docker_path, inter_dock_dir]
     try:
         _docker(docker_args)
@@ -163,7 +176,8 @@ def copy_to_host(image_name, docker_path, host_path, directory=False):
         error(e.output)
         exit(1)
 
-    inter_host_path = os.path.join(inter_host_dir, os.path.basename(docker_path))
+    inter_host_path = os.path.join(
+        inter_host_dir, os.path.basename(docker_path))
     try:
         shutil.copy(inter_host_path, host_path)
     except (IOError, shutil.Error) as e:
@@ -304,7 +318,7 @@ def get_tag_list_in_registry(registry, appname):
         headers = None
     try:
         r = requests.get(tag_list_url, headers=headers,
-                timeout=(REGISTRY_CONNECT_TIMEOUT, REGISTRY_READ_TIMEOUT))
+                         timeout=(REGISTRY_CONNECT_TIMEOUT, REGISTRY_READ_TIMEOUT))
         return r.json()['tags']
     except:
         return []
@@ -312,10 +326,12 @@ def get_tag_list_in_registry(registry, appname):
 
 def get_tag_list_in_docker_daemon(registry, appname):
     tag_list = []
-    c = Client()
-    imgs = c.images()
+    c = docker.from_env()
+    imgs = c.images.list()
     for img in imgs:
-        repo_tags = img['RepoTags']
+        repo_tags = img.tags
+        if not repo_tags:
+            continue
         for repo_tag in repo_tags:
             try:
                 s_list = repo_tag.split(":")
@@ -330,10 +346,10 @@ def get_tag_list_in_docker_daemon(registry, appname):
 
 def get_tag_list_using_by_containers(registry, appname):
     tag_list = []
-    c = Client()
-    containers = c.containers()
+    c = docker.from_env()
+    containers = c.containers.list()
     for container in containers:
-        repo, tag = container['Image'].split(":")
+        repo, tag = container.attrs['Config']['Image'].split(":")
         if repo == "%s/%s" % (registry, appname) and tag not in tag_list:
             tag_list.append(tag)
     return tag_list

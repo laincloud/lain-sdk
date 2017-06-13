@@ -14,6 +14,7 @@ from lain_sdk.yaml.parser import (
 
 FIXTURES_EXTRA_DOMAINS = ['extra.domain1.com', 'extra.domain2.org']
 
+
 class LainConfUtilsTests(TestCase):
 
     def test_just_simple_scale(self):
@@ -291,7 +292,8 @@ class LainConfTests(TestCase):
         hello_conf = LainConf()
         hello_conf.load(meta_yaml, repo_name, meta_version)
         assert hello_conf.appname == 'hello'
-        assert hello_conf.procs['web'].volumes == ['/data', '/var/lib/mysql', '/lain/logs']
+        assert hello_conf.procs['web'].volumes == [
+            '/data', '/var/lib/mysql', '/lain/logs']
         assert hello_conf.procs['web'].logs == ['a.log', 'b.log']
         annotation = json.loads(hello_conf.procs['web'].annotation)
         assert annotation['logs'] == ['a.log', 'b.log']
@@ -585,7 +587,8 @@ class LainConfTests(TestCase):
         assert hello_conf.procs['web'].env == []
         assert hello_conf.procs['web'].volumes == []
         assert hello_conf.procs['web'].port[80].port == 80
-        assert hello_conf.procs['web'].secret_files == ['/lain/app/hello/hello.tex','/lain/app/ /secret','/hello']
+        assert hello_conf.procs['web'].secret_files == [
+            '/lain/app/hello/hello.tex', '/lain/app/ /secret', '/hello']
 
     def test_lain_conf_proc_env_notexists(self):
         meta_yaml = '''
@@ -676,9 +679,11 @@ class LainConfTests(TestCase):
             "port": 8080
         }
         proc = Proc()
-        proc.load('web', meta_old, 'hello', '111111111-aaaaaaaaaaaaaaaaa', None)
+        proc.load('web', meta_old, 'hello',
+                  '111111111-aaaaaaaaaaaaaaaaa', None)
         proc1 = Proc()
-        proc1.load('web', meta_new, 'hello', '22222222-bbbbbbbbbbbbbbbbb', None)
+        proc1.load('web', meta_new, 'hello',
+                   '22222222-bbbbbbbbbbbbbbbbb', None)
         assert proc.name == 'web'
         assert proc.type.name == 'web'
         assert proc.cpu == 0
@@ -740,7 +745,7 @@ class LainConfTests(TestCase):
         my_mountpoint = hello_conf.procs['web'].mountpoint
         expect_mountpoint = [
             "%s.%s" % (hello_conf.appname, DOMAIN),
-            "%s.lain"%hello_conf.appname,
+            "%s.lain" % hello_conf.appname,
         ]
 
         # resource instance test
@@ -790,7 +795,8 @@ class LainConfTests(TestCase):
         meta_version = '1428553798-7142797e64bb7b4d057455ef13de6be156ae81cc'
         domains = [DOMAIN] + FIXTURES_EXTRA_DOMAINS
         r_conf = LainConf()
-        r_conf.load(resource_instance_meta_yaml, meta_version, None, domains=domains)
+        r_conf.load(resource_instance_meta_yaml,
+                    meta_version, None, domains=domains)
         assert r_conf.appname == 'resource.demo-service.hello'
         assert r_conf.procs['web'].env == ['ENV_A=enva', 'ENV_B=envb']
         assert r_conf.procs['web'].memory == '64m'
@@ -798,8 +804,8 @@ class LainConfTests(TestCase):
         assert r_conf.procs['web'].port[80].port == 80
         app_domain = 'hello.demo-service.resource'
         assert r_conf.procs['web'].mountpoint == ["%s.%s" % (app_domain, DOMAIN)] + \
-            ["%s.%s"%(app_domain, d) for d in FIXTURES_EXTRA_DOMAINS] + \
-            ["%s.lain"%app_domain]
+            ["%s.%s" % (app_domain, d) for d in FIXTURES_EXTRA_DOMAINS] + \
+            ["%s.lain" % app_domain]
 
     def test_lain_conf_no_mountpoint_for_not_web_type_proc(self):
         meta_yaml = '''
@@ -920,18 +926,21 @@ class LainConfTests(TestCase):
                     '''
         meta_version = '1428553798.443334-7142797e64bb7b4d057455ef13de6be156ae81cc'
         hello_conf = LainConf()
-        hello_conf.load(meta_yaml, meta_version, None, domains=[DOMAIN]+FIXTURES_EXTRA_DOMAINS)
+        hello_conf.load(meta_yaml, meta_version, None, domains=[
+                        DOMAIN] + FIXTURES_EXTRA_DOMAINS)
         assert hello_conf.appname == 'hello'
         my_mountpoint = hello_conf.procs['web'].mountpoint
         expect_mountpoint = ['a.foo', 'c.com/y/z',
                              '%s.%s' % (hello_conf.appname, DOMAIN),
-                             '%s.lain'%hello_conf.appname,
+                             '%s.lain' % hello_conf.appname,
                              '%s.%s/web' % (hello_conf.appname, DOMAIN),
-                             '%s.lain/web'%hello_conf.appname
+                             '%s.lain/web' % hello_conf.appname
                              ]
         for extra_domain in FIXTURES_EXTRA_DOMAINS:
-            expect_mountpoint.append('%s.%s' % (hello_conf.appname, extra_domain))
-            expect_mountpoint.append('%s.%s/web' % (hello_conf.appname, extra_domain))
+            expect_mountpoint.append('%s.%s' % (
+                hello_conf.appname, extra_domain))
+            expect_mountpoint.append('%s.%s/web' %
+                                     (hello_conf.appname, extra_domain))
 
         my_mountpoint.sort()
         expect_mountpoint.sort()
@@ -939,11 +948,12 @@ class LainConfTests(TestCase):
 
         my_mountpoint1 = hello_conf.procs['admin'].mountpoint
         expect_mountpoint1 = [
-                             '%s.%s/admin' % (hello_conf.appname, DOMAIN),
-                             '%s.lain/admin'%hello_conf.appname
-                             ]
+            '%s.%s/admin' % (hello_conf.appname, DOMAIN),
+            '%s.lain/admin' % hello_conf.appname
+        ]
         for extra_domain in FIXTURES_EXTRA_DOMAINS:
-            expect_mountpoint1.append('%s.%s/admin' % (hello_conf.appname, extra_domain))
+            expect_mountpoint1.append('%s.%s/admin' %
+                                      (hello_conf.appname, extra_domain))
         my_mountpoint1.sort()
         expect_mountpoint1.sort()
         assert my_mountpoint1 == expect_mountpoint1
@@ -1004,9 +1014,9 @@ class LainConfTests(TestCase):
         app_domain = 'hello.demo-service.resource'
         expect_mountpoint = ['a.foo', 'c.com/y/z',
                              '%s.%s' % (app_domain, DOMAIN),
-                             '%s.lain'%app_domain,
+                             '%s.lain' % app_domain,
                              '%s.%s/web' % (app_domain, DOMAIN),
-                             '%s.lain/web'%app_domain
+                             '%s.lain/web' % app_domain
                              ]
         my_mountpoint.sort()
         expect_mountpoint.sort()
@@ -1014,9 +1024,9 @@ class LainConfTests(TestCase):
 
         my_mountpoint1 = r_conf.procs['admin'].mountpoint
         expect_mountpoint1 = [
-                             '%s.%s/admin' % (app_domain, DOMAIN),
-                             '%s.lain/admin'%app_domain
-                             ]
+            '%s.%s/admin' % (app_domain, DOMAIN),
+            '%s.lain/admin' % app_domain
+        ]
         my_mountpoint1.sort()
         expect_mountpoint1.sort()
         assert my_mountpoint1 == expect_mountpoint1
@@ -1056,14 +1066,16 @@ class LainConfTests(TestCase):
                     '''
         meta_version = '1428553798.443334-7142797e64bb7b4d057455ef13de6be156ae81cc'
         hello_conf = LainConf()
-        hello_conf.load(meta_yaml, meta_version, None, domains=[DOMAIN]+FIXTURES_EXTRA_DOMAINS)
+        hello_conf.load(meta_yaml, meta_version, None, domains=[
+                        DOMAIN] + FIXTURES_EXTRA_DOMAINS)
         assert hello_conf.appname == 'hello'
         my_mountpoint = hello_conf.procs['web'].mountpoint
         expect_mountpoint = ['a.foo', 'a.foo/search', 'b.foo.bar/x', 'c.com/y/z',
                              '%s.%s' % (hello_conf.appname, DOMAIN),
-                             '%s.lain'%hello_conf.appname
+                             '%s.lain' % hello_conf.appname
                              ]
-        expect_mountpoint += ['%s.%s'%(hello_conf.appname, d) for d in FIXTURES_EXTRA_DOMAINS]
+        expect_mountpoint += ['%s.%s' % (hello_conf.appname, d)
+                              for d in FIXTURES_EXTRA_DOMAINS]
         my_mountpoint.sort()
         expect_mountpoint.sort()
         assert my_mountpoint == expect_mountpoint
@@ -1120,7 +1132,7 @@ class LainConfTests(TestCase):
         my_mountpoint = r_conf.procs['web'].mountpoint
         expect_mountpoint = ['a.foo', 'a.foo/search', 'b.foo.bar/x', 'c.com/y/z',
                              '%s.%s' % (app_domain, DOMAIN),
-                             '%s.lain'%app_domain
+                             '%s.lain' % app_domain
                              ]
         my_mountpoint.sort()
         expect_mountpoint.sort()
@@ -1157,7 +1169,8 @@ class LainConfTests(TestCase):
         hello_conf = LainConf()
         with pytest.raises(Exception) as e:
             hello_conf.load(meta_yaml, meta_version, None)
-            assert 'proc (type is web but name is not web) should have own mountpoint.' in str(e.value)
+            assert 'proc (type is web but name is not web) should have own mountpoint.' in str(
+                e.value)
 
         # resource instance test
         resource_instance_meta_yaml = '''
@@ -1201,7 +1214,8 @@ class LainConfTests(TestCase):
         r_conf = LainConf()
         with pytest.raises(Exception) as e:
             r_conf.load(meta_yaml, repo_name, meta_version)
-            assert 'proc (type is web but name is not web) should have own mountpoint.' in str(e.value)
+            assert 'proc (type is web but name is not web) should have own mountpoint.' in str(
+                e.value)
 
     def test_lain_conf_service_abbreviation(self):
         meta_yaml = '''
@@ -1369,10 +1383,12 @@ class LainConfTests(TestCase):
         assert r_conf.appname == 'resource.demo-service.hello'
         assert r_conf.procs['echo'].port[1234].port == 1234
         assert r_conf.procs['echo'].type == ProcType.worker
-        assert r_conf.procs['echo'].image == "regsitry.lain.local/demo-service:release-1428553798-7142797e64bb7b4d057455ef13de6be156ae81cc"
+        assert r_conf.procs[
+            'echo'].image == "regsitry.lain.local/demo-service:release-1428553798-7142797e64bb7b4d057455ef13de6be156ae81cc"
         assert r_conf.procs['portal-echo'].port[4321].port == 4321
         assert r_conf.procs['portal-echo'].type == ProcType.portal
-        assert r_conf.procs['portal-echo'].image == "regsitry.lain.local/demo-service:release-1428553798-7142797e64bb7b4d057455ef13de6be156ae81cc"
+        assert r_conf.procs[
+            'portal-echo'].image == "regsitry.lain.local/demo-service:release-1428553798-7142797e64bb7b4d057455ef13de6be156ae81cc"
 
     def test_lain_conf_resource_instance_full_definition(self):
         meta_yaml = '''
@@ -1419,12 +1435,14 @@ class LainConfTests(TestCase):
         assert r_conf.appname == 'resource/demo-service/hello'
         assert r_conf.procs['echo'].port[1234].port == 1234
         assert r_conf.procs['echo'].type == ProcType.worker
-        assert r_conf.procs['echo'].image == "regsitry.lain.local/demo-service:release-1428553798-7142797e64bb7b4d057455ef13de6be156ae81cc"
+        assert r_conf.procs[
+            'echo'].image == "regsitry.lain.local/demo-service:release-1428553798-7142797e64bb7b4d057455ef13de6be156ae81cc"
         assert r_conf.procs['portal-echo'].port[4321].port == 4321
         assert r_conf.procs['portal-echo'].type == ProcType.portal
         assert r_conf.procs['portal-echo'].service_name == 'echo'
         assert r_conf.procs['portal-echo'].allow_clients == 'hello'
-        assert r_conf.procs['portal-echo'].image == "regsitry.lain.local/demo-service:release-1428553798-7142797e64bb7b4d057455ef13de6be156ae81cc"
+        assert r_conf.procs[
+            'portal-echo'].image == "regsitry.lain.local/demo-service:release-1428553798-7142797e64bb7b4d057455ef13de6be156ae81cc"
 
     def test_lain_conf_use_resources_smoke(self):
         meta_yaml = '''
@@ -1555,7 +1573,8 @@ class LainConfTests(TestCase):
         echoclient_conf = LainConf()
         echoclient_conf.load(meta_yaml, repo_name, meta_version)
         assert echoclient_conf.appname == 'hello'
-        assert echoclient_conf.procs['web'].cloud_volumes.get('multi') == ['/data', '/var/lib/mysql']
+        assert echoclient_conf.procs['web'].cloud_volumes.get(
+            'multi') == ['/data', '/var/lib/mysql']
         print echoclient_conf.procs['web'].cloud_volumes
 
     def test_lain_conf_cloud_volumes_single_type(self):
@@ -1593,7 +1612,8 @@ class LainConfTests(TestCase):
         echoclient_conf.load(meta_yaml, repo_name, meta_version)
         assert echoclient_conf.appname == 'hello'
         assert echoclient_conf.procs['web'].cloud_volumes.get('multi') == None
-        assert echoclient_conf.procs['web'].cloud_volumes.get('single') == ['/data', '/var/lib/mysql']
+        assert echoclient_conf.procs['web'].cloud_volumes.get(
+            'single') == ['/data', '/var/lib/mysql']
         print echoclient_conf.procs['web'].cloud_volumes
 
     def test_lain_conf_volume_backup(self):
@@ -1852,6 +1872,7 @@ def test_resource_instance_meta_render_abbreviation():
     portalredis_proc = resource_instance_config.procs['portal-redis']
     assert portalredis_proc.image == 'myregistry.lain.org/proxy:release-1234567-abc'
 
+
 def test_resource_instance_meta_render_full():
     resource_appname = 'mysql'
     resource_meta_version = MYSQL_RESOURCE_META_VERSION
@@ -1890,6 +1911,7 @@ def test_resource_instance_meta_render_full():
     mysqlproxy_proc = resource_instance_config.procs['mysqlproxy']
     assert mysqlproxy_proc.image == 'myregistry.lain.org/proxy:release-1234567-abc'
 
+
 def test_build_section_with_old_prepare(old_prepare_yaml):
     app_meta_version = '123456-abcdefg'
     app_conf = LainConf()
@@ -1897,6 +1919,7 @@ def test_build_section_with_old_prepare(old_prepare_yaml):
                   domains=['registry.lain.local', 'lain.local'])
     assert app_conf.build.base == 'sunyi00/centos-python:1.0.0'
     assert app_conf.build.script == ['( pip install -r pip-req.txt )']
+    assert app_conf.build.build_arg == ['ARG1=arg1', 'ARG2=arg2']
     assert app_conf.build.prepare.version == "0"
     assert app_conf.build.prepare.keep == []
     assert app_conf.build.prepare.script == [
@@ -1907,6 +1930,7 @@ def test_build_section_with_old_prepare(old_prepare_yaml):
     ]
     assert not app_conf.procs['web'].stateful
 
+
 def test_build_section_with_new_prepare(new_prepare_yaml):
     app_meta_version = '123456-abcdefg'
     app_conf = LainConf()
@@ -1914,6 +1938,7 @@ def test_build_section_with_new_prepare(new_prepare_yaml):
                   domains=['registry.lain.local', 'lain.local'])
     assert app_conf.build.base == 'sunyi00/centos-python:1.0.0'
     assert app_conf.build.script == ['( pip install -r pip-req.txt )']
+    assert app_conf.build.build_arg == ['ARG1=arg1', 'ARG2=arg2']
     assert app_conf.build.prepare.version == "0"
     assert app_conf.build.prepare.keep == [
         'node_modules',
@@ -1926,6 +1951,7 @@ def test_build_section_with_new_prepare(new_prepare_yaml):
         '( ls -1 | grep -v \'\\bnode_modules\\b\' | grep -v \'\\bbundle\\b\' | xargs rm -rf )'
     ]
     assert app_conf.procs['web'].stateful
+
 
 def test_proc_section_with_healthcheck(healthcheck_yaml):
     app_meta_version = '123456-abcdefg'
@@ -1949,9 +1975,11 @@ def test_proc_section_with_healthcheck(healthcheck_yaml):
     assert annotation['healthcheck'] == '/kg/health/check'
     assert app_conf.procs['web'].healthcheck == '/kg/health/check'
 
+
 def test_release(release_yaml):
     app_meta_version = '123456-abcdefg'
     app_conf = LainConf()
     app_conf.load(release_yaml, 'release', app_meta_version,
                   domains=['registry.lain.local', 'lain.local'])
-    assert app_conf.release.copy == [{'dest': '/usr/bin/hello', 'src': 'hello'}, {'dest': 'hi', 'src': 'hi'}]
+    assert app_conf.release.copy == [
+        {'dest': '/usr/bin/hello', 'src': 'hello'}, {'dest': 'hi', 'src': 'hi'}]

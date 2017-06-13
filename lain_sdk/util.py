@@ -103,7 +103,8 @@ def meta_version(repo_dir, sha1=''):
         git_cmd = ['git', 'log', '-1', '--pretty=format:%ct-%H']
 
     try:
-        commit_hash = subprocess.check_output(git_cmd, cwd=repo_dir, stderr=subprocess.STDOUT)
+        commit_hash = subprocess.check_output(
+            git_cmd, cwd=repo_dir, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         warn('Error getting cd Git commit hash: {}'.format(e.output))
         return None
@@ -119,7 +120,8 @@ def parse_registry_auth(registry):
     need_auth, auth_url = False, ''
     registry_url = "http://%s/v2" % registry
     try:
-        r = requests.get(registry_url, timeout=(REGISTRY_CONNECT_TIMEOUT, REGISTRY_READ_TIMEOUT))
+        r = requests.get(registry_url, timeout=(
+            REGISTRY_CONNECT_TIMEOUT, REGISTRY_READ_TIMEOUT))
         need_auth = r.status_code == 401
         if need_auth:
             auth_url = _get_registry_auth_url(r)
@@ -145,14 +147,14 @@ def _get_registry_auth_url(response):
 def get_jwt_for_registry(auth_url, registry, appname):
     # get auth username and password from dockercfg
     try:
-        cfgs = auth.load_config()
-        cfg = cfgs[registry]
-        username = cfg['username']
-        password = cfg['password']
+        cfg = auth.resolve_authconfig(auth.load_config(), registry=registry)
+        username = cfg['username'] if 'username' in cfg else cfg['Username']
+        password = cfg['password'] if 'password' in cfg else cfg['Password']
         # phase, phase_config = get_phase_config_from_registry(registry)
         # domain = phase_config.get(user_config.domain_key, '')
         # only use `lain.local` as service
-        url = "%s?service=%s&scope=repository:%s:push,pull&account=%s" % (auth_url, "lain.local", appname, username)
+        url = "%s?service=%s&scope=repository:%s:push,pull&account=%s" % (
+            auth_url, "lain.local", appname, username)
         response = requests.get(url, auth=HTTPBasicAuth(username, password))
         if response.status_code < 400 and response.json()['token']:
             return response.json()['token']
