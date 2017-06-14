@@ -1,6 +1,7 @@
 # LAIN SDK
 
 [![Build Status](https://travis-ci.org/laincloud/lain-sdk.svg?branch=master)](https://travis-ci.org/laincloud/lain-sdk)
+[![Coverage Status](https://coveralls.io/repos/github/laincloud/lain-sdk/badge.svg)](https://coveralls.io/github/laincloud/lain-sdk)
 [![MIT license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://opensource.org/licenses/MIT)
 
 LAIN SDK 在 LAIN 集群中用于对 lain.yaml 的解析，包含 python parser 和 lua parser。
