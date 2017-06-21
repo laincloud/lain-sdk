@@ -4,6 +4,8 @@ python:
 install:
     # Travis's pre-installed pip and pytest are too old:
     # https://docs.travis-ci.com/user/languages/python/#Pre-installed-packages
-    - pip install --upgrade setuptools pytest
+    - pip install --upgrade setuptools pytest pytest-cov coveralls
     - python setup.py install
-script: py.test
+script: py.test --cov=lain_sdk
+after_success:
+    coveralls
