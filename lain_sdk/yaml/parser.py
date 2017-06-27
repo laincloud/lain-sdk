@@ -612,6 +612,7 @@ class Test:
 
 class LainConf:
     appname = ''
+    giturl = ''
     build = Build()
     release = Release()
     test = Test()
@@ -624,6 +625,7 @@ class LainConf:
         meta = yaml.safe_load(meta_yaml)
         self.meta_version = meta_version
         self.appname = meta.get('appname', None)
+        self.giturl = meta.get('giturl', None)
         if self.appname is None:
             raise Exception('invalid lain conf: no appname')
         if self.appname in INVALID_APPNAMES:
