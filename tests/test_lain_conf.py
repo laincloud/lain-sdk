@@ -587,8 +587,55 @@ class LainConfTests(TestCase):
         assert hello_conf.procs['web'].env == []
         assert hello_conf.procs['web'].volumes == []
         assert hello_conf.procs['web'].port[80].port == 80
+        assert hello_conf.procs['web'].secret_files_bypass == False
         assert hello_conf.procs['web'].secret_files == [
             '/lain/app/hello/hello.tex', '/lain/app/ /secret', '/hello']
+
+    def test_lain_conf_proc_secret_files_bypass(self):
+        meta_yaml = '''
+                    appname: hello
+                    build:
+                        base: golang
+                        prepare:
+                            - echo prepare1
+                            - echo prepare2
+                        script:
+                            - echo buildscript1
+                            - echo buildscript2
+                    release:
+                        dest_base: ubuntu
+                        copy:
+                            - src: hello
+                              dest: /usr/bin/hello
+                            - src: entry.sh
+                              dest: /entry.sh
+                    test:
+                        script:
+                            - go test
+                    web:
+                        cmd: hello
+                        port: 80
+                        secret_files_bypass: True
+                        secret_files:
+                          - "hello/hello.tex"
+                          -  " /secret"
+                          -     /hello
+                    notify:
+                        slack: "#hello"
+                    '''
+        repo_name = 'lain/hello'
+        meta_version = '1428553798.443334-7142797e64bb7b4d057455ef13de6be156ae81cc'
+        hello_conf = LainConf()
+        hello_conf.load(meta_yaml, repo_name, meta_version)
+        assert hello_conf.appname == 'hello'
+        assert hello_conf.procs['web'].env == []
+        assert hello_conf.procs['web'].volumes == []
+        assert hello_conf.procs['web'].port[80].port == 80
+        assert hello_conf.procs['web'].secret_files_bypass == True
+        assert hello_conf.procs['web'].secret_files == [
+            '/lain/app/hello/hello.tex', '/lain/app/ /secret', '/hello']
+
+
 
     def test_lain_conf_proc_env_notexists(self):
         meta_yaml = '''
