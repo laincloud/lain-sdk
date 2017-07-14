@@ -253,6 +253,7 @@ class Proc:
     system_volumes = []
     cloud_volumes = {}
     secret_files = []  # for proc
+    secret_files_bypass = False
     service_name = ''
     allow_clients = ''
     backup = []
@@ -430,6 +431,7 @@ class Proc:
         self.secret_files = meta.get('secret_files') or []
         # add /lain/app for relative paths
         self.secret_files = parse_path(self.secret_files)
+        self.secret_files_bypass = meta.get('secret_files_bypass') or False
 
         # ProcType.portal 的 proc 有 service_name 和 allow_clients
         if self.type == ProcType.portal:
