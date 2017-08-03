@@ -262,7 +262,7 @@ class Proc:
     setup_time = 0
     kill_timeout = 10
 
-    def load(self, keyword, meta, appname, meta_version, default_image, **cluster_config):
+    def load(self, keyword, meta, appname, meta_version, default_image, image_config={}, **cluster_config):
         default_image_name = default_image or gen_image_name(
             appname,
             'release',
@@ -279,11 +279,10 @@ class Proc:
         if len(proc_info) == 1:
             self.name = proc_info[0]
             self.type = ProcType[proc_info[0]]  # 放弃meta里面的type定义
+
         self.image = meta.get('image', default_image_name)
-        meta_entrypoint = meta.get('entrypoint')
-        self.entrypoint = self.__to_exec_form(meta_entrypoint)
-        meta_cmd = meta.get('cmd')
-        self.cmd = self.__to_exec_form(meta_cmd)
+        self.entrypoint = self.__get_entrypoint(meta, image_config)
+        self.cmd = self.__get_cmd(meta, image_config)
         self.user = meta.get('user', '')
         self.working_dir = meta.get('workdir') or meta.get('working_dir', '')
         dns_search_meta = meta.get('dns_search', [])
@@ -514,6 +513,22 @@ class Proc:
             command_and_params_list = []
         return command_and_params_list
 
+    def __get_entrypoint(self, meta, image_config):
+        image_entrypoint = self.__to_exec_form(image_config.get('Entrypoint', []))
+        meta_entrypoint = self.__to_exec_form(meta.get('entrypoint'))
+        if len(meta_entrypoint) > 0:
+            return meta_entrypoint
+        else:
+            return image_entrypoint
+
+    def __get_cmd(self, meta, image_config):
+        image_cmd = self.__to_exec_form(image_config.get('Cmd', []))
+        meta_cmd = self.__to_exec_form(meta.get('cmd'))
+        if len(meta_cmd) > 0:
+            return meta_cmd
+        else:
+            return image_cmd
+
     @property
     def annotation(self):
         data = {}
@@ -623,7 +638,7 @@ class LainConf:
     use_services = {}
     use_resources = {}
 
-    def load(self, meta_yaml, meta_version, default_image, **cluster_config):
+    def load(self, meta_yaml, meta_version, default_image, image_config={}, **cluster_config):
         meta = yaml.safe_load(meta_yaml)
         self.meta_version = meta_version
         self.appname = meta.get('appname', None)
@@ -633,8 +648,9 @@ class LainConf:
         if self.appname in INVALID_APPNAMES:
             raise Exception('invalid lain conf: appname {} should not in {}'.format(
                 self.appname, INVALID_APPNAMES))
-        self.procs = self._load_procs(meta, self.appname, meta_version, default_image, registry=cluster_config.get(
-            'registry', PRIVATE_REGISTRY), domains=cluster_config.get('domains', [DOMAIN]))
+        self.procs = self._load_procs(meta, self.appname, meta_version, default_image, image_config,
+                                      registry=cluster_config.get('registry', PRIVATE_REGISTRY),
+                                      domains=cluster_config.get('domains', [DOMAIN]))
         self.build = self._load_build(meta)
         self.release = self._load_release(meta)
         self.test = self._load_test(meta)
@@ -648,13 +664,15 @@ class LainConf:
         if use_resources_meta:
             self.use_resources = self._load_use_resources(use_resources_meta)
 
-    def _load_procs(self, meta, appname, meta_version, default_image, **cluster_config):
+    def _load_procs(self, meta, appname, meta_version, default_image, image_config, **cluster_config):
         _procs = {}
 
         def _proc_load(key, meta, **cluster_config):
             _proc = Proc()
-            _proc.load(key, meta, appname, meta_version, default_image, registry=cluster_config.get(
-                'registry', PRIVATE_REGISTRY), domains=cluster_config.get('domains', [DOMAIN]))
+            _proc.load(key, meta, appname, meta_version, default_image,
+                       image_config=image_config,
+                       registry=cluster_config.get('registry', PRIVATE_REGISTRY),
+                       domains=cluster_config.get('domains', [DOMAIN]))
 
             # TODO 更多错误校验
             if _proc.name in _procs.keys():
