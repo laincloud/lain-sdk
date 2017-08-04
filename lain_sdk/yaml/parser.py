@@ -418,8 +418,8 @@ class Proc:
                     "Log in Logs section MUST be a relative path based on /lain/logs. Wrong path: %s" % (log))
             if log not in self.logs:
                 self.logs.append(log)
-        if logs_meta:
-            self.volumes.append('/lain/logs')
+
+        self.volumes.append('/lain/logs') # mount /lain/logs by default for stdout/stderr
 
         # add default system volume
         self.system_volumes = DEFAULT_SYSTEM_VOLUMES

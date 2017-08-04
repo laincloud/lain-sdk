@@ -115,7 +115,7 @@ class LainConfTests(TestCase):
         assert hello_conf.procs['web'].user == ''
         assert hello_conf.procs['web'].working_dir == ''
         assert hello_conf.procs['web'].dns_search == ['hello.lain']
-        assert hello_conf.procs['web'].volumes == ['/data', '/var/lib/mysql']
+        assert hello_conf.procs['web'].volumes == ['/data', '/var/lib/mysql', '/lain/logs']
         assert hello_conf.procs['web'].port[80].port == 80
         assert hello_conf.procs['web'].stateful is False
         assert hello_conf.procs['foo'].memory == '128m'
@@ -251,7 +251,7 @@ class LainConfTests(TestCase):
         hello_conf.load(meta_yaml, meta_version, None)
         assert hello_conf.appname == 'hello'
         assert hello_conf.procs['web'].env == ['ENV_A=enva', 'ENV_B=envb']
-        assert hello_conf.procs['web'].volumes == ['/data', '/var/lib/mysql']
+        assert hello_conf.procs['web'].volumes == ['/data', '/var/lib/mysql', '/lain/logs']
         assert hello_conf.procs['web'].logs == []
         assert hello_conf.procs['web'].port[80].port == 80
 
@@ -270,7 +270,7 @@ class LainConfTests(TestCase):
         hello_conf = LainConf()
         hello_conf.load(meta_yaml, repo_name, meta_version)
         assert hello_conf.appname == 'hello'
-        assert hello_conf.procs['web'].volumes == ['/data', '/var/lib/mysql']
+        assert hello_conf.procs['web'].volumes == ['/data', '/var/lib/mysql', '/lain/logs']
         assert hello_conf.procs['web'].logs == []
 
     def test_lain_conf_logs(self):
@@ -375,7 +375,7 @@ class LainConfTests(TestCase):
         hello_conf.load(meta_yaml, meta_version, None)
         assert hello_conf.appname == 'hello'
         assert hello_conf.procs['web'].env == ['ENV_A=enva', 'ENV_B=envb']
-        assert hello_conf.procs['web'].volumes == ['/data', '/var/lib/mysql']
+        assert hello_conf.procs['web'].volumes == ['/data', '/var/lib/mysql', '/lain/logs']
         assert hello_conf.procs['web'].port[80].port == 80
 
     def test_lain_conf_port_webtype_without_port_meta(self):
@@ -415,7 +415,7 @@ class LainConfTests(TestCase):
         hello_conf.load(meta_yaml, meta_version, None)
         assert hello_conf.appname == 'hello'
         assert hello_conf.procs['web'].env == ['ENV_A=enva', 'ENV_B=envb']
-        assert hello_conf.procs['web'].volumes == ['/data', '/var/lib/mysql']
+        assert hello_conf.procs['web'].volumes == ['/data', '/var/lib/mysql', '/lain/logs']
         assert hello_conf.procs['web'].port[80].port == 80
 
     def test_lain_conf_proc_name(self):
@@ -545,7 +545,7 @@ class LainConfTests(TestCase):
         hello_conf.load(meta_yaml, meta_version, None)
         assert hello_conf.appname == 'hello'
         assert hello_conf.procs['web'].env == []
-        assert hello_conf.procs['web'].volumes == []
+        assert hello_conf.procs['web'].volumes == ['/lain/logs']
         assert hello_conf.procs['web'].port[80].port == 80
 
     def test_lain_conf_proc_secret_files(self):
@@ -585,7 +585,7 @@ class LainConfTests(TestCase):
         hello_conf.load(meta_yaml, repo_name, meta_version)
         assert hello_conf.appname == 'hello'
         assert hello_conf.procs['web'].env == []
-        assert hello_conf.procs['web'].volumes == []
+        assert hello_conf.procs['web'].volumes == ['/lain/logs']
         assert hello_conf.procs['web'].port[80].port == 80
         assert hello_conf.procs['web'].secret_files_bypass == False
         assert hello_conf.procs['web'].secret_files == [
@@ -629,7 +629,7 @@ class LainConfTests(TestCase):
         hello_conf.load(meta_yaml, repo_name, meta_version)
         assert hello_conf.appname == 'hello'
         assert hello_conf.procs['web'].env == []
-        assert hello_conf.procs['web'].volumes == []
+        assert hello_conf.procs['web'].volumes == ['/lain/logs']
         assert hello_conf.procs['web'].port[80].port == 80
         assert hello_conf.procs['web'].secret_files_bypass == True
         assert hello_conf.procs['web'].secret_files == [
@@ -669,7 +669,7 @@ class LainConfTests(TestCase):
         hello_conf.load(meta_yaml, meta_version, None)
         assert hello_conf.appname == 'hello'
         assert hello_conf.procs['web'].env == []
-        assert hello_conf.procs['web'].volumes == []
+        assert hello_conf.procs['web'].volumes == ['/lain/logs']
         assert hello_conf.procs['web'].port[80].port == 80
 
     def test_lain_conf_proc_patch(self):
@@ -787,7 +787,7 @@ class LainConfTests(TestCase):
         assert hello_conf.appname == 'hello'
         assert hello_conf.procs['web'].env == ['ENV_A=enva', 'ENV_B=envb']
         assert hello_conf.procs['web'].memory == '64m'
-        assert hello_conf.procs['web'].volumes == ['/data', '/var/lib/mysql']
+        assert hello_conf.procs['web'].volumes == ['/data', '/var/lib/mysql', '/lain/logs']
         assert hello_conf.procs['web'].port[80].port == 80
         my_mountpoint = hello_conf.procs['web'].mountpoint
         expect_mountpoint = [
@@ -847,7 +847,7 @@ class LainConfTests(TestCase):
         assert r_conf.appname == 'resource.demo-service.hello'
         assert r_conf.procs['web'].env == ['ENV_A=enva', 'ENV_B=envb']
         assert r_conf.procs['web'].memory == '64m'
-        assert r_conf.procs['web'].volumes == ['/data', '/var/lib/mysql']
+        assert r_conf.procs['web'].volumes == ['/data', '/var/lib/mysql', '/lain/logs']
         assert r_conf.procs['web'].port[80].port == 80
         app_domain = 'hello.demo-service.resource'
         assert r_conf.procs['web'].mountpoint == ["%s.%s" % (app_domain, DOMAIN)] + \
