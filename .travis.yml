@@ -1,11 +1,21 @@
 language: python
+
 python:
-    - 2.7
+  - 2.7
+
 install:
-    # Travis's pre-installed pip and pytest are too old:
-    # https://docs.travis-ci.com/user/languages/python/#Pre-installed-packages
-    - pip install --upgrade setuptools pytest pytest-cov coveralls
-    - python setup.py install
+  - pip install --upgrade setuptools pytest pytest-cov codecov
+  - python setup.py install
+
 script: py.test --cov=lain_sdk
+
 after_success:
-    coveralls
+  - codecov
+
+deploy:
+  provider: pypi
+  user: laincloud
+  password:
+    secure: OJOAlnyD/Dw+VH5l5NFTiUr5XRdmq7tEMFap33FABVcNcPlp6Cf5BGZduedt+jRG0qTbBT+4qNwX7fVvG6UQ40EsYoXaxWI4olQajXmpIWSelZqwF25V2bjw/uaYll8cI5UllsVfu6zCB4A3BxgaW0Wx6PQaBz30aBCpiPV6dCySxxSUFmmpFTBb2cjvKV4KI5Zh39RzRDM6WHiOYJtprCf8HIe/gCV22zYNoaFSRnb10XhwJTz0tr8pXo6ANVLcRVp/cfvgFZ1bRuAnTgm4jajN259Mj51/FZdpLuo/gtZPD+sxNz8jblfCs8M/TXIgj+JPCvgcvEszXVRiDXRR0nshJQyXfS0quHfMFdxBivqiU79nNlIC+MyxKBCnk4XMhtItW+c3EJ6kkwitvshtvpJie8KNsodC8pnYiYTJZwWqf2safsxerShenuNkRFNwUE+ztUR9YgC/UBP01+rgQdyZydMA6U4xPk7yzdHN1aE4KNzIuqUMorRg9mW7WXqJ+hCqNQI6CCYudfDqyK9bPYuzsg43DkpRh53f3tp0irA4HhIlYgQJ5SJdjZw0KADe2LIzRtbKYWLJ3tSMKL9tJyBfBy9HdIxgAid5xdY7DLjeVxd59vFLbkFvboo1NH1iVD9vgm/RwahewEyv7u7i3znFI9VU2FZ3nJ7UhlIGQL0=
+  on:
+    tags: true
