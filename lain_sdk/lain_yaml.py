@@ -280,8 +280,8 @@ class LainYaml(object):
             return (False, None)
 
         try:
-            host_release_tar = tempfile.NamedTemporaryFile(delete=False).name
-            untar = tempfile.mkdtemp()
+            host_release_tar = tempfile.NamedTemporaryFile(dir='/tmp',delete=False).name
+            untar = tempfile.mkdtemp(dir='/tmp')
 
             mydocker.copy_to_host(copy_inter_name, p.join(
                 DOCKER_APP_ROOT, release_tar), host_release_tar)

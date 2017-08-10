@@ -165,7 +165,7 @@ def copy_to_host(image_name, docker_path, host_path, directory=False):
         cp = ['cp', '-r']
     else:
         cp = ['cp']
-    inter_host_dir = tempfile.mkdtemp()
+    inter_host_dir = tempfile.mkdtemp(dir='/tmp')
     inter_dock_dir = '/lain_share'
     docker_args = ['run', '--rm', '-v',
                    '{}:{}'.format(inter_host_dir, inter_dock_dir), image_name]
