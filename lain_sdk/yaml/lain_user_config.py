@@ -3,6 +3,7 @@
 
 import os
 import yaml
+import stat
 
 
 LAIN_USER_CONFIG_FILE_NAME = "lain.conf.yaml"
@@ -49,7 +50,7 @@ class LainUserConfig:
 
     def ensure_config_path(self):
         if not os.path.exists(self.config_path):
-            os.makedirs(self.config_path)
+            os.makedirs(self.config_path, 0700)
 
     def set_config(self, **kwargs):
         _config = self.get_config_from(self.user_config_file)
@@ -65,6 +66,7 @@ class LainUserConfig:
         self.ensure_config_path()
         with open(self.user_config_file, "w") as f:
             f.write(yaml.safe_dump(config, default_flow_style=False))
+            os.chmod(self.user_config_file, stat.S_IREAD|stat.S_IWRITE)
 
     def set_global_config(self, **kwargs):
         _config = self.get_config_from(self.user_global_config_file)
