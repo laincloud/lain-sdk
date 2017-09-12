@@ -252,7 +252,7 @@ def proc_rm(container_name, host_volume_base):
     info('rm proc instance {}'.format(container_name))
     _docker(['rm', '-v', container_name])
     info('rm proc instance volume at host: {}'.format(host_volume_base))
-    subprocess.call(['sudo', 'rm', '-rf', host_volume_base])  # FIXME
+    subprocess.call(['rm', '-rf', host_volume_base])
 
 
 def inspect(container_name):
