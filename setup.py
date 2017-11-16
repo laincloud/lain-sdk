@@ -6,7 +6,7 @@ requirements = [
     'Jinja2==2.7.3',
     'PyYAML==3.11',
     'enum34==1.0.4',
-    'requests==2.6.0',
+    'requests>=2.6.1',
     'websocket-client==0.32.0',
     'docker==2.1.0',
     'pytest',
