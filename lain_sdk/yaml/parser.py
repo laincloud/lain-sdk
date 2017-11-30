@@ -146,7 +146,7 @@ class Ports:
         self.ports = []
         self.src_port = []
         if isinstance(meta, str):
-            src_port, dst_port, proto = self.parse(m)
+            src_port, dst_port, proto = self.parse(meta)
             port_mapping = {'srcport': src_port,
                             'dstport': dst_port, 'proto': proto}
             self.ports = [port_mapping]
@@ -234,8 +234,8 @@ class Proc:
     name = ''
     type = ProcType.worker
     image = ''
-    entrypoint = ''
-    cmd = ''
+    entrypoint = None
+    cmd = None
     num_instances = 1
     cpu = 0
     memory = '32m'
@@ -262,7 +262,7 @@ class Proc:
     setup_time = 0
     kill_timeout = 10
 
-    def load(self, keyword, meta, appname, meta_version, default_image, image_config={}, **cluster_config):
+    def load(self, keyword, meta, appname, meta_version, default_image, **cluster_config):
         default_image_name = default_image or gen_image_name(
             appname,
             'release',
@@ -281,8 +281,8 @@ class Proc:
             self.type = ProcType[proc_info[0]]  # 放弃meta里面的type定义
 
         self.image = meta.get('image', default_image_name)
-        self.entrypoint = self.__get_entrypoint(meta, image_config)
-        self.cmd = self.__get_cmd(meta, image_config)
+        self.entrypoint = self.__get_entrypoint(meta)
+        self.cmd = self.__get_cmd(meta)
         self.user = meta.get('user', '')
         self.working_dir = meta.get('workdir') or meta.get('working_dir', '')
         dns_search_meta = meta.get('dns_search', [])
@@ -505,7 +505,9 @@ class Proc:
     def __to_exec_form(self, command_and_params):
         """ 将 shell form(空格分隔) 转变为 exec form(string list)，或者保持 exec form 的格式
         """
-        if isinstance(command_and_params, basestring):
+        if command_and_params is None:
+            return None
+        elif isinstance(command_and_params, basestring):
             command_and_params_list = command_and_params.split()
         elif isinstance(command_and_params, list) and all(isinstance(item, basestring) for item in command_and_params):
             command_and_params_list = command_and_params
@@ -513,21 +515,13 @@ class Proc:
             command_and_params_list = []
         return command_and_params_list
 
-    def __get_entrypoint(self, meta, image_config):
-        image_entrypoint = self.__to_exec_form(image_config.get('Entrypoint', []))
-        meta_entrypoint = self.__to_exec_form(meta.get('entrypoint'))
-        if len(meta_entrypoint) > 0:
-            return meta_entrypoint
-        else:
-            return image_entrypoint
+    def __get_entrypoint(self, meta):
+        meta_entrypoint = self.__to_exec_form(meta.get('entrypoint', None))
+        return meta_entrypoint
 
-    def __get_cmd(self, meta, image_config):
-        image_cmd = self.__to_exec_form(image_config.get('Cmd', []))
-        meta_cmd = self.__to_exec_form(meta.get('cmd'))
-        if len(meta_cmd) > 0:
-            return meta_cmd
-        else:
-            return image_cmd
+    def __get_cmd(self, meta):
+        meta_cmd = self.__to_exec_form(meta.get('cmd', None))
+        return meta_cmd
 
     @property
     def annotation(self):
@@ -638,7 +632,7 @@ class LainConf:
     use_services = {}
     use_resources = {}
 
-    def load(self, meta_yaml, meta_version, default_image, image_config={}, **cluster_config):
+    def load(self, meta_yaml, meta_version, default_image, **cluster_config):
         meta = yaml.safe_load(meta_yaml)
         self.meta_version = meta_version
         self.appname = meta.get('appname', None)
@@ -648,7 +642,7 @@ class LainConf:
         if self.appname in INVALID_APPNAMES:
             raise Exception('invalid lain conf: appname {} should not in {}'.format(
                 self.appname, INVALID_APPNAMES))
-        self.procs = self._load_procs(meta, self.appname, meta_version, default_image, image_config,
+        self.procs = self._load_procs(meta, self.appname, meta_version, default_image,
                                       registry=cluster_config.get('registry', PRIVATE_REGISTRY),
                                       domains=cluster_config.get('domains', [DOMAIN]))
         self.build = self._load_build(meta)
@@ -664,13 +658,12 @@ class LainConf:
         if use_resources_meta:
             self.use_resources = self._load_use_resources(use_resources_meta)
 
-    def _load_procs(self, meta, appname, meta_version, default_image, image_config, **cluster_config):
+    def _load_procs(self, meta, appname, meta_version, default_image, **cluster_config):
         _procs = {}
 
         def _proc_load(key, meta, **cluster_config):
             _proc = Proc()
             _proc.load(key, meta, appname, meta_version, default_image,
-                       image_config=image_config,
                        registry=cluster_config.get('registry', PRIVATE_REGISTRY),
                        domains=cluster_config.get('domains', [DOMAIN]))
 
