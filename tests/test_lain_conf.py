@@ -211,7 +211,7 @@ class LainConfTests(TestCase):
         hello_conf.load(meta_yaml, meta_version, None)
         assert hello_conf.appname == 'hello'
         assert hello_conf.procs['web'].port[80].port == 80
-        assert hello_conf.procs['web'].cmd == []
+        assert hello_conf.procs['web'].cmd == None
 
     def test_lain_conf_port_with_type(self):
         meta_yaml = '''
