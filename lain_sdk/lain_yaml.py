@@ -323,12 +323,7 @@ class LainYaml(object):
             'scripts': self.test.script
         }
         test_name = self.img_builders['test'](context=self.ctx, params=params, build_args=[])
-        if test_name is None:
-            last_container_id = mydocker.get_latest_container_id()
-            if last_container_id != -1:
-                # for lain enter-test, tricky, ugly, but works!
-                mydocker.commit(last_container_id, self.img_names['test'])
-
+      
         if test_name is None:
             error("Tests Fail")
             return (False, None)
