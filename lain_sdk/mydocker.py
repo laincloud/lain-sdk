@@ -136,20 +136,6 @@ def build(name, context, ignore, template, params, build_args):
     return name
 
 
-def get_latest_container_id():
-    try:
-        output = _docker(['ps', '-l', '-q'], capture_output=True)
-    except subprocess.CalledProcessError:
-        return -1
-
-    try:
-        container_id = output.splitlines()[-1]
-    except IndexError:  # No containers:
-        return -1
-
-    return container_id
-
-
 def remove_container(container_id):
     info('removing container {} ...'.format(container_id))
     _docker(['kill', container_id])
