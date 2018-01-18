@@ -356,14 +356,6 @@ schema = {
             "type": "object",
             "properties": typed_proc_properties,
             "additionalProperties": False,
-            "anyOf": [
-                {
-                    "required": ["entrypoint"]
-                },
-                {
-                    "required": ["cmd"]
-                }
-            ]
         },
         portal_proc_pattern: {
             "type": "object",

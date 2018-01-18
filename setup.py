@@ -3,7 +3,7 @@ from lain_sdk import __version__
 
 
 requirements = [
-    'Jinja2==2.7.3',
+    'Jinja2>=2.7.3',
     'PyYAML==3.11',
     'enum34==1.0.4',
     'requests>=2.6.1',

@@ -118,7 +118,7 @@ class Labels:
 
 class Filters:
     SECTION_KEYWORDS = Enum('SECTION_KEYWORDS', 'filters')
-    patten = re.compile(r'(affinity|constraint):(.*)(==|!=)(.*)')
+    patten = re.compile(r'(affinity|constraint):(\S+)(==|!=)(\S+)')
 
     def load(self, meta):
         self.filters = []
@@ -129,6 +129,13 @@ class Filters:
             for m in meta:
                 self.parse(m)
                 self.filters.append(m)
+
+        isDefaultGroup = True
+        for f in self.filters:
+            if f.startswith(('constraint:group==', 'constraint:group!=')):
+                isDefaultGroup = False
+        if isDefaultGroup:
+            self.filters.append('constraint:group==default')
 
     def parse(self, meta):
         m = self.patten.match(meta)
