@@ -316,7 +316,7 @@ class Proc:
         labels_meta = meta.get('labels', None)
         if labels_meta:
             self.labels = self._load_labels(labels_meta)
-        filters_meta = meta.get('filters', None)
+        filters_meta = meta.get('filters', ['constraint:group==default'])
         if filters_meta:
             self.filters = self._load_filters(filters_meta)
 
