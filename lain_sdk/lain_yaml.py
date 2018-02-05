@@ -322,7 +322,7 @@ class LainYaml(object):
             'copy_list': [],
             'scripts': self.test.script
         }
-        test_name = self.img_builders['test'](context=self.ctx, params=params, build_args=[])
+        test_name = self.img_builders['test'](context=self.ctx, params=params, build_args=[], use_cache=False)
       
         if test_name is None:
             error("Tests Fail")
