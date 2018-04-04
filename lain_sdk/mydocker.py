@@ -343,3 +343,8 @@ def get_tag_list_using_by_containers(registry, appname):
         if repo == "%s/%s" % (registry, appname) and tag not in tag_list:
             tag_list.append(tag)
     return tag_list
+
+
+def get_image(image_name):
+    c = docker.from_env()
+    return c.images.get(image_name)

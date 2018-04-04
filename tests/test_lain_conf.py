@@ -1967,7 +1967,7 @@ def test_build_section_with_old_prepare(old_prepare_yaml):
     assert app_conf.build.base == 'sunyi00/centos-python:1.0.0'
     assert app_conf.build.script == ['( pip install -r pip-req.txt )']
     assert app_conf.build.build_arg == ['ARG1=arg1', 'ARG2=arg2']
-    assert app_conf.build.prepare.version == "0"
+    assert app_conf.build.prepare.version == None
     assert app_conf.build.prepare.keep == []
     assert app_conf.build.prepare.script == [
         '( touch /sbin/modprobe && chmod +x /sbin/modprobe )',
