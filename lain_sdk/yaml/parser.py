@@ -551,23 +551,24 @@ class Proc:
 
 
 class Prepare:
-    version = "0"
     script = []
     keep = []
 
     def load(self, meta):
         if isinstance(meta, list):
-            self.version = "0"
+            self.version = None
             self.script = meta
             self.script = ['( %s )' % s for s in self.script]
             self.keep = []
         else:
-            version = str(meta.get('version', '0')).strip()
-            if VALID_PREPARE_VERSION_PATERN.match(version):
-                self.version = version
-            else:
-                raise Exception(
-                    "invalid prepare version: %s\nVALID_PREPARE_VERSION_PATERN: r\"^[a-zA-Z0-9]+$\"" % version)
+            self.version = meta.get('version')
+            if self.version is not None:
+                version = str(self.version).strip()
+                if VALID_PREPARE_VERSION_PATERN.match(version):
+                    self.version = version
+                else:
+                    raise Exception(
+                        "invalid prepare version: %s\nVALID_PREPARE_VERSION_PATERN: r\"^[a-zA-Z0-9]+$\"" % version)
             self.script = meta.get('script') or []
             self.script = ['( %s )' % s for s in self.script]
             self.keep = meta.get('keep') or self.keep
@@ -592,9 +593,10 @@ class Build:
         self.script = ['( %s )' % s for s in self.script]
         self.build_arg = meta.get('build_arg') or []
         self.base = base
-        prepare = meta.get('prepare', {})
-        self.prepare = Prepare()
-        self.prepare.load(prepare)
+        prepare = meta.get('prepare')
+        if prepare is not None:
+            self.prepare = Prepare()
+            self.prepare.load(prepare)
 
 
 class Release:

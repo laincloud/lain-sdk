@@ -4,6 +4,7 @@
 import time
 import re
 import collections
+import hashlib
 import os.path as p
 from functools import partial
 import tempfile
@@ -50,34 +51,56 @@ class LainYaml(object):
         self._prepare_act(ignore_prepare=ignore_prepare)
 
     def _get_prepare_shared_image_names(self, remote=True):
-        prepare_version = self.build.prepare.version
         registry = PRIVATE_REGISTRY
-
-        if registry is None:
-            error("Please set private_docker_registry config first!")
-            error(
-                "Use 'lain config save-global private_docker_registry ${registry_domain}'")
-            exit(1)
-
         image_prefix = "{}/{}".format(registry, self.appname)
         if remote:
+            if registry is None:
+                error("Please set private_docker_registry config first!")
+                error(
+                    "Use 'lain config save-global private_docker_registry ${registry_domain}'")
+                exit(1)
+
             # 预设就是 prepare image 存在 PRIVATE_REGISTRY
             tags = mydocker.get_tag_list_in_registry(registry, self.appname)
         else:
             tags = mydocker.get_tag_list_in_docker_daemon(
                 registry, self.appname)
         prepare_shared_images = {}
-        VALID_TAG_PATERN = re.compile(
-            r"^prepare-{}-(?P<timestamp>\d+)$".format(prepare_version))
-        for tag in tags:
-            matched = VALID_TAG_PATERN.match(tag)
-            if matched:
-                _timestamp = int(matched.group('timestamp'))
-                prepare_shared_images[_timestamp] = "{}:{}".format(
-                    image_prefix, tag)
+        prepare_version = self.build.prepare.version
+        if prepare_version is None:
+            VALID_TAG_PATTERN = re.compile(self._get_prepare_auto_version_pattern())
+            for tag in tags:
+                matched = VALID_TAG_PATTERN.match(tag)
+                if matched:
+                    _timestamp = int(matched.group('timestamp'))
+                    prepare_shared_images[_timestamp] = "{}:{}".format(image_prefix, tag)
+        else:
+            VALID_TAG_PATERN = re.compile(
+                r"^prepare-{}-(?P<timestamp>\d+)$".format(prepare_version))
+            for tag in tags:
+                matched = VALID_TAG_PATERN.match(tag)
+                if matched:
+                    _timestamp = int(matched.group('timestamp'))
+                    prepare_shared_images[_timestamp] = "{}:{}".format(
+                        image_prefix, tag)
+
         ordered_images = collections.OrderedDict(sorted(
             prepare_shared_images.items(), reverse=True))
         return ordered_images
+
+    def _get_prepare_auto_version_pattern(self):
+        base_image_id = self.build_base_image.short_id[len("sha256:"):]
+        prepare_script_id = hashlib.sha256("{}{}".format(
+            self.build.base, ' && '.join(self.build.prepare.script))).hexdigest()[:16]
+        return r"^prepare-(?P<timestamp>\d+)-{}-{}$".format(base_image_id, prepare_script_id)
+
+    def _gen_prepare_auto_version_image_name(self):
+        timestamp = int(time.time())
+        base_image_id = self.build_base_image.short_id[len("sha256:"):]
+        prepare_script_id = hashlib.sha256("{}{}".format(
+            self.build.base, ' && '.join(self.build.prepare.script))).hexdigest()[:16]
+        return "{}/{}:prepare-{}-{}-{}".format(
+            PRIVATE_REGISTRY, self.appname, timestamp, base_image_id, prepare_script_id)
 
     def gen_prepare_shared_image_name(self):
         # 如果没有可用的 shared prepare image ，则需要创建一个新的，这里提供新
@@ -142,6 +165,10 @@ class LainYaml(object):
         """
         self._prepare_act()
 
+        if self.build.prepare is None:
+            error("build.prepare not found in lain.yaml.")
+            exit(1)
+
         if (not mydocker.exist(self.img_names['prepare'])):
             params = {
                 'base': self.build.base,
@@ -189,8 +216,11 @@ class LainYaml(object):
                 'copy_list': ['.'],
                 'scripts': self.build.prepare.script,
             }
+            new_prepare_image_name = self._gen_prepare_auto_version_image_name()
+            if self.build.prepare.version is not None:
+                new_prepare_image_name = self.gen_prepare_shared_image_name()
             name = self.prepare_updater(
-                name=self.gen_prepare_shared_image_name(),
+                name=new_prepare_image_name,
                 context=self.ctx, params=params, build_args=[])
             if name is None:
                 return (False, None)
@@ -205,14 +235,17 @@ class LainYaml(object):
         """
         self._prepare_act()
 
+        base = self.build.base
         # image prepare
-        if not (mydocker.exist(self.img_names['prepare']) and use_prepare):
-            if not self.build_prepare()[0]:
-                return (False, None)
+        if self.build.prepare is not None and use_prepare:
+            base = self.img_names['prepare']
+            if not mydocker.exist(self.img_names['prepare']):
+                if not self.build_prepare()[0]:
+                    return (False, None)
 
         # image build
         params = {
-            'base': self.img_names['prepare'],
+            'base': base,
             'workdir': self.workdir,
             'copy_list': ['.'],
             'scripts': self.build.script,
@@ -352,6 +385,10 @@ class LainYaml(object):
             raise Exception(
                 'self.yaml_path not set, can not perform action, only fields defined in lain.yaml is accessible')
 
+        if mydocker.pull(self.build.base) != 0:
+            raise Exception('docker pull {} failed'.format(self.build.base))
+
+        self.build_base_image = mydocker.get_image(self.build.base)
         self.ctx = file_parent_dir(self.yaml_path)
         self.workdir = DOCKER_APP_ROOT + '/'  # '/' is need for COPY in Dockefile
 
@@ -362,14 +399,14 @@ class LainYaml(object):
         phases = ('prepare', 'build', 'release', 'test', 'meta')
         self.img_names = {phase: self.gen_name(
             phase=phase) for phase in phases}
-        if ignore_prepare:
+        if ignore_prepare or self.build.prepare is None:
             shared_prepare_image_name = None
         else:
             shared_prepare_image_name = self.ensure_proper_shared_image()
-        if shared_prepare_image_name is None:
-            self.img_names['prepare'] = self.gen_prepare_shared_image_name()
-        else:
-            self.img_names['prepare'] = shared_prepare_image_name
+            if shared_prepare_image_name is None:
+                shared_prepare_image_name = self._gen_prepare_auto_version_image_name()
+
+        self.img_names['prepare'] = shared_prepare_image_name
 
         j2temps = {
             'prepare': 'build_dockerfile.j2',
