@@ -10,6 +10,7 @@ import subprocess
 import shutil
 import requests
 from requests.auth import HTTPBasicAuth
+import time
 from .yaml.conf import user_config
 from docker import auth
 
@@ -29,15 +30,15 @@ _yellow = _colorize('33')
 
 
 def info(msg):
-    print(_green(">>> " + msg))
+    print(_green("{} >>> {}".format(time.strftime("%Y-%m-%d %H:%M:%S"), msg), True))
 
 
 def error(msg):
-    print(_red(">>> " + msg, True))
+    print(_red("{} >>> {}".format(time.strftime("%Y-%m-%d %H:%M:%S"), msg), True))
 
 
 def warn(msg):
-    print(_yellow(">>> " + msg, True))
+    print(_yellow("{} >>> {}".format(time.strftime("%Y-%m-%d %H:%M:%S"), msg), True))
 
 
 # Log

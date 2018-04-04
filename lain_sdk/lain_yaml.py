@@ -385,10 +385,12 @@ class LainYaml(object):
             raise Exception(
                 'self.yaml_path not set, can not perform action, only fields defined in lain.yaml is accessible')
 
-        if mydocker.pull(self.build.base) != 0:
-            raise Exception('docker pull {} failed'.format(self.build.base))
+        if ignore_prepare is False:
+            if mydocker.pull(self.build.base) != 0:
+                raise Exception('docker pull {} failed'.format(self.build.base))
 
-        self.build_base_image = mydocker.get_image(self.build.base)
+            self.build_base_image = mydocker.get_image(self.build.base)
+
         self.ctx = file_parent_dir(self.yaml_path)
         self.workdir = DOCKER_APP_ROOT + '/'  # '/' is need for COPY in Dockefile
 

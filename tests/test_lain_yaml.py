@@ -32,7 +32,10 @@ class TestLainYaml:
     def test_prepare_act(self):
         y = LainYaml(ignore_prepare=True)
         assert y.act == False
-        y.init_act(YAML, ignore_prepare=True)
+        try:
+            y.init_act(YAML, ignore_prepare=True)
+        except Exception:
+            pass
         assert y.act == True
         assert len(y.img_names) == 5
         assert len(y.img_temps) == 5
