@@ -406,7 +406,10 @@ class LainYaml(object):
         else:
             shared_prepare_image_name = self.ensure_proper_shared_image()
             if shared_prepare_image_name is None:
-                shared_prepare_image_name = self._gen_prepare_auto_version_image_name()
+                if self.build.prepare.version is None:
+                    shared_prepare_image_name = self._gen_prepare_auto_version_image_name()
+                else:
+                    shared_prepare_image_name = self.gen_prepare_shared_image_name()
 
         self.img_names['prepare'] = shared_prepare_image_name
 
