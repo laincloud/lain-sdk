@@ -10,12 +10,12 @@ from functools import partial
 import tempfile
 
 from .yaml.util import load_template
-from .yaml.conf import DOCKER_APP_ROOT, PRIVATE_REGISTRY, user_config
+from .yaml.conf import DOCKER_APP_ROOT, LAIN_CACHE_DIR, PRIVATE_REGISTRY, user_config
 from .yaml.parser import LainConf
 import mydocker
 from .util import (error, warn, info, mkdir_p, rm, file_parent_dir,
                    meta_version)
-from subprocess import call
+from subprocess import call, check_call
 
 DOMAIN_KEY = user_config.domain_key
 
@@ -247,6 +247,9 @@ class LainYaml(object):
                 if not self.build_prepare()[0]:
                     return (False, None)
 
+        if self.build.volumes is not None:
+            return self.build_base_with_volumes(base)
+
         # image build
         params = {
             'base': base,
@@ -259,6 +262,14 @@ class LainYaml(object):
         if name is None:
             return (False, None)
         return (True, name)
+
+    def build_base_with_volumes(self, base_image_name):
+        """
+        :return: (True, image_name) or (False, None)
+        """
+        image_name = mydocker.compile_by_docker(self.img_names['build'], base_image_name,
+                                                self.ctx, self.build.volumes, self.build.script)
+        return (True, image_name)
 
     def build_release(self, use_prepare=False, use_build=False):
         """
@@ -284,59 +295,33 @@ class LainYaml(object):
         else:
             script_inter_name = self.img_names['build']
 
+        dest_base = self.release.dest_base
+        release_copy = list(self.release.copy)
         if self.release.dest_base == '':
-            mydocker.tag(script_inter_name, self.img_names['release'])
-            return (True, self.img_names['release'])
+            if self.build.volumes is None:
+                mydocker.tag(script_inter_name, self.img_names['release'])
+                return (True, self.img_names['release'])
 
-        copy_dest = '/lain/release'
-
-        def to_dest(f):
-            return copy_dest + p.join(DOCKER_APP_ROOT, f)
-
-        src_dest = [(
-            x.get('src', x), to_dest(x.get('dest', x))) for x in self.release.copy
-        ]
-        copy_scripts = []
-        release_tar = 'release.tar'
-        for src, dest in src_dest:
-            copy_scripts.append(' '.join(['mkdir', '-p', p.dirname(dest)]))
-            copy_scripts.append(' '.join(['cp', '-r', src, dest]))
-        tar_script = ["tar -cf {} -C {} .".format(release_tar, copy_dest)]
-        params = {
-            'base': script_inter_name,
-            'workdir': self.workdir,
-            'copy_list': [],
-            'scripts': copy_scripts + tar_script
-        }
-        inter_name = self.gen_name(phase='copy_inter')
-        copy_inter_name = mydocker.build(
-            inter_name, self.ctx, self.ignore, self.img_temps['build'], params, [])
-        if script_inter_name != self.img_names['build']:
-            mydocker.remove_image(script_inter_name)
-        if copy_inter_name is None:
-            return (False, None)
+            dest_base = script_inter_name
+            release_copy = self.build.volumes + [DOCKER_APP_ROOT]
+            release_copy = [{'src': x, 'dest': x} for x in release_copy]
 
         try:
-            host_release_tar = tempfile.NamedTemporaryFile(dir='/tmp',delete=False).name
-            untar = tempfile.mkdtemp(dir='/tmp')
-
-            mydocker.copy_to_host(copy_inter_name, p.join(
-                DOCKER_APP_ROOT, release_tar), host_release_tar)
-            mydocker.remove_image(copy_inter_name)
-
-            mkdir_p(untar)
-            call(['tar', '-xf', host_release_tar, '-C', untar])
-
+            tmp_dir = tempfile.mkdtemp(dir='/tmp')
+            mydocker.copy_to_host(script_inter_name, release_copy,
+                                  tmp_dir, context=self.ctx,
+                                  volumes=self.build.volumes)
             params = {
-                'base': self.release.dest_base,
+                'base': dest_base,
                 'workdir': self.workdir,
                 'copy_list': ['.'],
             }
-            name = self.img_builders['release'](context=untar, params=params, build_args=[])
-        except Exception:
+            name = self.img_builders['release'](context=tmp_dir, params=params, build_args=[])
+        except Exception as e:
+            info('Exception: {}'.format(e))
             name = None
         finally:
-            delete = (host_release_tar, untar)
+            delete = [tmp_dir]
             for f in delete:
                 if p.exists(f):
                     rm(f)
@@ -353,6 +338,9 @@ class LainYaml(object):
         if not self.build_base(use_prepare=True)[0]:
             return (False, None)
 
+        if self.build.volumes is not None:
+            return self.build_test_with_volumes()
+
         params = {
             'base': self.img_names['build'],
             'workdir': self.workdir,
@@ -367,6 +355,11 @@ class LainYaml(object):
         else:
             info("Tests Passed")
             return (True, test_name)
+
+    def build_test_with_volumes(self):
+        image_name = mydocker.compile_by_docker(self.img_names['test'], self.img_names['build'],
+                                                self.ctx, self.build.volumes, self.test.script)
+        return (True, image_name)
 
     def build_meta(self):
         """

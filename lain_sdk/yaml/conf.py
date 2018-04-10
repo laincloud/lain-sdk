@@ -6,6 +6,7 @@ import yaml
 from lain_sdk.yaml.lain_user_config import LainUserConfig
 
 DOCKER_APP_ROOT = '/lain/app'
+LAIN_CACHE_DIR = '.lain-cache'
 
 user_config = LainUserConfig.create()
 etc = user_config.get_config()
