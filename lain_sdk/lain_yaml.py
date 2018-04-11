@@ -193,6 +193,10 @@ class LainYaml(object):
         """
         self._prepare_act()
 
+        if self.build.prepare is None:
+            error("build.prepare not found in lain.yaml.")
+            exit(1)
+
         # no existed shared prepare
         if (not mydocker.exist(self.img_names['prepare'])):
             params = {
@@ -403,6 +407,8 @@ class LainYaml(object):
             phase=phase) for phase in phases}
         if ignore_prepare or self.build.prepare is None:
             shared_prepare_image_name = None
+            del self.img_names['prepare']
+            phases = filter(lambda x: x != 'prepare', phases)
         else:
             shared_prepare_image_name = self.ensure_proper_shared_image()
             if shared_prepare_image_name is None:
@@ -411,7 +417,7 @@ class LainYaml(object):
                 else:
                     shared_prepare_image_name = self.gen_prepare_shared_image_name()
 
-        self.img_names['prepare'] = shared_prepare_image_name
+            self.img_names['prepare'] = shared_prepare_image_name
 
         j2temps = {
             'prepare': 'build_dockerfile.j2',

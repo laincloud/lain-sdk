@@ -37,12 +37,12 @@ class TestLainYaml:
         except Exception:
             pass
         assert y.act == True
-        assert len(y.img_names) == 5
-        assert len(y.img_temps) == 5
-        assert len(y.img_builders) == 5
+        assert len(y.img_names) == 4
+        assert len(y.img_temps) == 4
+        assert len(y.img_builders) == 4
 
         y = LainYaml(YAML, ignore_prepare=True)
         assert y.act == True
-        assert len(y.img_names) == 5
-        assert len(y.img_temps) == 5
-        assert len(y.img_builders) == 5
+        assert len(y.img_names) == 4
+        assert len(y.img_temps) == 4
+        assert len(y.img_builders) == 4
