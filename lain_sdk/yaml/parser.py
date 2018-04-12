@@ -598,6 +598,12 @@ class Build:
             self.prepare = Prepare()
             self.prepare.load(prepare)
 
+        self.volumes = meta.get('volumes')
+        if self.volumes is not None:
+            for v in self.volumes:
+                if not os.path.isabs(v):
+                    raise Exception('invalid build.volumes: {}, should be absolute path'.format(v))
+
 
 class Release:
     script = []
@@ -656,6 +662,8 @@ class LainConf:
                                       domains=cluster_config.get('domains', [DOMAIN]))
         self.build = self._load_build(meta)
         self.release = self._load_release(meta)
+        if self.build.volumes is not None and self.release.script != []:
+            raise Exception('invalid lain.yaml: release.script is not supported')
         self.test = self._load_test(meta)
         self.notify = self._load_notify(meta)
 

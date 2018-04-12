@@ -223,6 +223,10 @@ build = {
             "description": "build args to build the app",
             "items": {"type": "string"}
         },
+        "volumes": {
+            "description": "bind mount volumes, similar to docker run --volume",
+            "items": {"type": "string"}
+        }
     },
     "additionalProperties": False,
     "required": ["base", "script"]

@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import getpass
 import os
+import os.path as path
+import pwd
 import shutil
 import tempfile
 import requests
@@ -12,6 +15,7 @@ from .util import (info, error,
                    recur_create_file, rm,
                    parse_registry_auth, get_jwt_for_registry,
                    REGISTRY_CONNECT_TIMEOUT, REGISTRY_READ_TIMEOUT)
+from .yaml.conf import DOCKER_APP_ROOT, LAIN_CACHE_DIR
 
 
 DOCKER_BASE_URL = os.environ.get('DOCKER_HOST', '')
@@ -140,44 +144,66 @@ def build(name, context, ignore, template, params, build_args, use_cache=True):
     return name
 
 
+def compile_by_docker(build_image_name, base_image_name, context, volumes, script):
+    info('building image {} ...'.format(build_image_name))
+    files = subprocess.check_output(['find', '.', '-maxdepth', '1',
+                           '!', '-path', './{}'.format(LAIN_CACHE_DIR),
+                           '!', '-path', '.' ],
+                          cwd=context).strip().split('\n')
+    subprocess.check_call(['mkdir', '-p',
+                           '{}{}'.format(LAIN_CACHE_DIR, DOCKER_APP_ROOT)],
+                          cwd=context)
+    subprocess.check_call(['cp', '-rf', '-t',
+                           '{}{}'.format(LAIN_CACHE_DIR, DOCKER_APP_ROOT)] + files,
+                          cwd=context)
+
+    container_name = build_image_name.replace(':', '_')
+    docker_args = ['run', '-w', DOCKER_APP_ROOT, '--name', container_name]
+    for v in volumes + [DOCKER_APP_ROOT]:
+        docker_args += ['-v', '{}/{}{}:{}'.format(context, LAIN_CACHE_DIR, v, v)]
+    docker_args += [base_image_name, 'sh', '-c', ' && '.join(script)]
+    info('docker {}...'.format(' '.join(docker_args)))
+    run_retcode = _docker(docker_args, cwd=context)
+    commit_retcode = _docker(['commit', container_name, build_image_name], print_stdout=False)
+    _docker(['rm', '-f', container_name], print_stdout=False)
+    if run_retcode != 0 or commit_retcode != 0:
+        exit(1)
+
+    info('docker {} succeed.'.format(' '.join(docker_args)))
+    info('build succeed: {}'.format(build_image_name))
+    return build_image_name
+
+
 def remove_container(container_id):
     info('removing container {} ...'.format(container_id))
     _docker(['kill', container_id])
     _docker(['rm', '-f', container_id])
 
 
-def copy_to_host(image_name, docker_path, host_path, directory=False):
-    info('copying {} in {} to {} in host ...'.format(
-        docker_path, image_name, host_path))
+def copy_to_host(image_name, release_copy, host_dir, context=None, volumes=None):
+    '''
+    release_copy: release.copy in lain.yaml
+    '''
+    src_dest = [(path.join(DOCKER_APP_ROOT, x.get('src')),
+                 '{}{}'.format(host_dir, path.join(DOCKER_APP_ROOT, x.get('dest'))))
+                for x in release_copy]
+
+    scripts = []
+    for x in src_dest:
+        scripts.append('(mkdir -p {})'.format(path.dirname(x[1])))
+        scripts.append('(cp -r {} {})'.format(x[0], x[1]))
+    user = pwd.getpwnam(getpass.getuser())
     # can not use `-v /vagrant:xxx` because `/vagrant` itself in `vagrant` is
     # a mount point, buggy
-    if directory:
-        cp = ['cp', '-r']
-    else:
-        cp = ['cp']
-    inter_host_dir = tempfile.mkdtemp(dir='/tmp')
-    inter_dock_dir = '/lain_share'
-    docker_args = ['run', '--rm', '-v',
-                   '{}:{}'.format(inter_host_dir, inter_dock_dir), image_name]
-    docker_args += cp + [docker_path, inter_dock_dir]
-    try:
-        _docker(docker_args)
-    except subprocess.CalledProcessError as e:
-        error(e.output)
+    docker_args = ['run', '--rm', '-u', '{}:{}'.format(user.pw_uid, user.pw_gid),
+                   '-v', '{}:{}'.format(host_dir, host_dir)]
+    if context is not None and volumes is not None:
+        for v in volumes + [DOCKER_APP_ROOT]:
+            docker_args += ['-v', '{}/{}{}:{}'.format(context, LAIN_CACHE_DIR, v, v)]
+    docker_args += [image_name, 'sh', '-c', ' && '.join(scripts)]
+    retcode = _docker(docker_args, cwd=context)
+    if retcode != 0:
         exit(1)
-
-    inter_host_path = os.path.join(
-        inter_host_dir, os.path.basename(docker_path))
-    try:
-        shutil.copy(inter_host_path, host_path)
-    except (IOError, shutil.Error) as e:
-        error(repr(e))
-        exit(1)
-
-    if directory:
-        rm(inter_host_path, True)
-    else:
-        rm(inter_host_path)
 
 
 def remove_none_repo():
