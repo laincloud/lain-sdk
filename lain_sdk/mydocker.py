@@ -162,16 +162,21 @@ def compile_by_docker(build_image_name, base_image_name, context, volumes, scrip
                    '--entrypoint', '']
     for v in volumes + [DOCKER_APP_ROOT]:
         docker_args += ['-v', '{}/{}{}:{}'.format(context, LAIN_CACHE_DIR, v, v)]
-    docker_args += [base_image_name, 'sh', '-c', ' && '.join(script)]
+    docker_args += [base_image_name, '/bin/bash', '-c', ' && '.join(script)]
     info('docker {}...'.format(' '.join(docker_args)))
-    run_retcode = _docker(docker_args, cwd=context)
-    commit_retcode = _docker(['commit', container_name, build_image_name], print_stdout=False)
-    _docker(['rm', '-f', container_name], print_stdout=False)
-    if run_retcode != 0 or commit_retcode != 0:
-        exit(1)
+    try:
+        run_retcode = _docker(docker_args, cwd=context)
+        commit_retcode = _docker(['commit', container_name, build_image_name], print_stdout=False)
+        if run_retcode != 0 or commit_retcode != 0:
+            error('docker {} failed.'.format(' '.join(docker_args)))
+            error('build failed: {}'.format(build_image_name))
+            exit(1)
 
-    info('docker {} succeed.'.format(' '.join(docker_args)))
-    info('build succeed: {}'.format(build_image_name))
+        info('docker {} succeed.'.format(' '.join(docker_args)))
+        info('build succeed: {}'.format(build_image_name))
+    finally:
+        _docker(['rm', '-f', container_name], print_stdout=False)
+
     return build_image_name
 
 
