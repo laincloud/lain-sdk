@@ -16,6 +16,7 @@ LAIN_CONFIG_SSO_URL_KEY = "sso_url"
 LAIN_CONFIG_SSO_TOKEN_KEY = "sso_token"
 LAIN_CONFIG_SSO_REFRESH_TOKEN_KEY = "sso_refresh_token"
 LAIN_CONFIG_DOMAIN_KEY = "domain"
+LAIN_CONFIG_STAGE_KEY = "stage"
 
 
 class LainUserConfig:
@@ -26,6 +27,7 @@ class LainUserConfig:
     sso_token_key = LAIN_CONFIG_SSO_TOKEN_KEY
     sso_refresh_token_key = LAIN_CONFIG_SSO_REFRESH_TOKEN_KEY
     domain_key = LAIN_CONFIG_DOMAIN_KEY
+    stage_key = LAIN_CONFIG_STAGE_KEY
 
     @classmethod
     def get_config_from(cls, config_file):
