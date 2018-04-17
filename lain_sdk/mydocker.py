@@ -159,10 +159,10 @@ def compile_by_docker(build_image_name, base_image_name, context, volumes, scrip
 
     container_name = build_image_name.replace(':', '_')
     docker_args = ['run', '-w', DOCKER_APP_ROOT, '--name', container_name,
-                   '--entrypoint', '']
+                   '--entrypoint', '/bin/bash']
     for v in volumes + [DOCKER_APP_ROOT]:
         docker_args += ['-v', '{}/{}{}:{}'.format(context, LAIN_CACHE_DIR, v, v)]
-    docker_args += [base_image_name, '/bin/bash', '-c', ' && '.join(script)]
+    docker_args += [base_image_name, '-c', ' && '.join(script)]
     info('docker {}...'.format(' '.join(docker_args)))
     try:
         run_retcode = _docker(docker_args, cwd=context)
@@ -202,11 +202,11 @@ def copy_to_host(image_name, release_copy, host_dir, context=None, volumes=None)
     # can not use `-v /vagrant:xxx` because `/vagrant` itself in `vagrant` is
     # a mount point, buggy
     docker_args = ['run', '--rm', '-u', '{}:{}'.format(user.pw_uid, user.pw_gid),
-                   '--entrypoint', '', '-v', '{}:{}'.format(host_dir, host_dir)]
+                   '--entrypoint', '/bin/sh', '-v', '{}:{}'.format(host_dir, host_dir)]
     if context is not None and volumes is not None:
         for v in volumes + [DOCKER_APP_ROOT]:
             docker_args += ['-v', '{}/{}{}:{}'.format(context, LAIN_CACHE_DIR, v, v)]
-    docker_args += [image_name, 'sh', '-c', ' && '.join(scripts)]
+    docker_args += [image_name, '-c', ' && '.join(scripts)]
     retcode = _docker(docker_args, cwd=context)
     if retcode != 0:
         exit(1)
