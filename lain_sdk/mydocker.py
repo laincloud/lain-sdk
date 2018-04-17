@@ -160,8 +160,10 @@ def compile_by_docker(build_image_name, base_image_name, context, volumes, scrip
     container_name = build_image_name.replace(':', '_')
     docker_args = ['run', '-w', DOCKER_APP_ROOT, '--name', container_name,
                    '--entrypoint', '/bin/bash']
+    user = pwd.getpwnam(getpass.getuser())
     for v in volumes + [DOCKER_APP_ROOT]:
         docker_args += ['-v', '{}/{}{}:{}'.format(context, LAIN_CACHE_DIR, v, v)]
+        script.append('(chown -R {}:{} {})'.format(user.pw_uid, user.pw_gid, v))
     docker_args += [base_image_name, '-c', ' && '.join(script)]
     info('docker {}...'.format(' '.join(docker_args)))
     try:
@@ -199,10 +201,9 @@ def copy_to_host(image_name, release_copy, host_dir, context=None, volumes=None)
         scripts.append('(mkdir -p {})'.format(os.path.dirname(x[1])))
         scripts.append('(cp -r {} {})'.format(x[0], x[1]))
     user = pwd.getpwnam(getpass.getuser())
-    # can not use `-v /vagrant:xxx` because `/vagrant` itself in `vagrant` is
-    # a mount point, buggy
-    docker_args = ['run', '--rm', '-u', '{}:{}'.format(user.pw_uid, user.pw_gid),
-                   '--entrypoint', '/bin/sh', '-v', '{}:{}'.format(host_dir, host_dir)]
+    scripts.append('(chown -R {}:{} {})'.format(user.pw_uid, user.pw_gid, host_dir))
+    docker_args = ['run', '--rm', '--entrypoint', '/bin/sh',
+                   '-v', '{}:{}'.format(host_dir, host_dir)]
     if context is not None and volumes is not None:
         for v in volumes + [DOCKER_APP_ROOT]:
             docker_args += ['-v', '{}/{}{}:{}'.format(context, LAIN_CACHE_DIR, v, v)]
