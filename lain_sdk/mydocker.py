@@ -3,7 +3,7 @@
 
 import getpass
 import os
-import os.path as path
+import os.path
 import pwd
 import shutil
 import tempfile
@@ -190,13 +190,13 @@ def copy_to_host(image_name, release_copy, host_dir, context=None, volumes=None)
     '''
     release_copy: release.copy in lain.yaml
     '''
-    src_dest = [(path.join(DOCKER_APP_ROOT, x.get('src')),
-                 '{}{}'.format(host_dir, path.join(DOCKER_APP_ROOT, x.get('dest'))))
+    src_dest = [(__normalize_path_in_container(x.get('src')),
+                 '{}{}'.format(host_dir, __normalize_path_in_container(x.get('dest'))))
                 for x in release_copy]
 
     scripts = []
     for x in src_dest:
-        scripts.append('(mkdir -p {})'.format(path.dirname(x[1])))
+        scripts.append('(mkdir -p {})'.format(os.path.dirname(x[1])))
         scripts.append('(cp -r {} {})'.format(x[0], x[1]))
     user = pwd.getpwnam(getpass.getuser())
     # can not use `-v /vagrant:xxx` because `/vagrant` itself in `vagrant` is
@@ -210,6 +210,13 @@ def copy_to_host(image_name, release_copy, host_dir, context=None, volumes=None)
     retcode = _docker(docker_args, cwd=context)
     if retcode != 0:
         exit(1)
+
+
+def __normalize_path_in_container(path):
+    if path.startswith('$'):  # It starts with an environment variable, so keep unchanged
+        return path
+
+    return os.path.join(DOCKER_APP_ROOT, path)
 
 
 def remove_none_repo():
