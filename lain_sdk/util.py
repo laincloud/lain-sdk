@@ -4,7 +4,7 @@
 import logging
 import os
 import copy
-from sys import stderr
+from sys import stderr, stdout
 import errno
 import subprocess
 import shutil
@@ -31,14 +31,17 @@ _yellow = _colorize('33')
 
 def info(msg):
     print(_green("{} >>> {}".format(time.strftime("%Y-%m-%d %H:%M:%S"), msg), True))
+    stdout.flush()
 
 
 def error(msg):
     print(_red("{} >>> {}".format(time.strftime("%Y-%m-%d %H:%M:%S"), msg), True))
+    stdout.flush()
 
 
 def warn(msg):
     print(_yellow("{} >>> {}".format(time.strftime("%Y-%m-%d %H:%M:%S"), msg), True))
+    stdout.flush()
 
 
 # Log
