@@ -366,13 +366,19 @@ class LainYaml(object):
         :return: (True, image_name) or (False, None)
         """
         self._prepare_act()
-        params = {
-            'base': 'scratch'
-        }
-        name = self.img_builders['meta'](context=self.ctx, params=params, build_args=[])
-        if name is None:
-            return (False, None)
-        return (True, name)
+        tmp_dir = tempfile.mkdtemp(dir='/tmp')
+        try:
+            check_call(['cp', 'lain.yaml', tmp_dir], cwd=self.ctx)
+            params = {
+                'base': 'scratch'
+            }
+            name = self.img_builders['meta'](context=tmp_dir, params=params, build_args=[])
+            if name is None:
+                return (False, None)
+
+            return (True, name)
+        finally:
+            rm(tmp_dir)
 
     def _prepare_act(self, ignore_prepare=False):
         if self.act is True:
@@ -391,7 +397,7 @@ class LainYaml(object):
         self.ctx = file_parent_dir(self.yaml_path)
         self.workdir = DOCKER_APP_ROOT + '/'  # '/' is need for COPY in Dockefile
 
-        self.ignore = ['.git', '.vagrant']
+        self.ignore = ['.git', LAIN_CACHE_DIR, '.vagrant']
 
         self.gen_name = partial(mydocker.gen_image_name, appname=self.appname, meta_version=meta_version(self.ctx))
 
