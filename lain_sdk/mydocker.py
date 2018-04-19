@@ -5,7 +5,9 @@ import getpass
 import os
 import os.path
 import pwd
+import random
 import shutil
+import string
 import tempfile
 import requests
 import subprocess
@@ -158,6 +160,8 @@ def compile_by_docker(build_image_name, base_image_name, context, volumes, scrip
                           cwd=context)
 
     container_name = build_image_name.replace(':', '_')
+    container_name += '-'
+    container_name += ''.join(random.choice(string.digits) for _ in range(3))
     docker_args = ['run', '-w', DOCKER_APP_ROOT, '--name', container_name,
                    '--entrypoint', '/bin/bash']
     user = pwd.getpwnam(getpass.getuser())
